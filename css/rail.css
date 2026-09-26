@@ -1,0 +1,99 @@
+/* Left-hand navigation. */
+.rail{
+  position:absolute;z-index:45;top:0;bottom:0;
+  left:clamp(14px,2.4vw,34px);width:max-content;
+  pointer-events:none;
+}
+.zone{
+  position:absolute;left:0;
+  display:flex;flex-direction:column;gap:12px;
+  pointer-events:auto;
+}
+.zone.top   {top:clamp(86px,13vh,132px)}
+.zone.bottom{bottom:clamp(86px,13vh,132px)}
+
+/* Active item is represented by a single dot at the centre. */
+.rail-dot{
+  position:absolute;left:1px;top:50%;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent);
+  transform:translateY(-50%);
+  transform-origin:50% 50%;
+  transition:transform .5s cubic-bezier(.34,1.5,.5,1);
+}
+.rail-dot.pulse{transform:translateY(-50%) scale(1.55)}
+
+.tick{
+  display:block;padding:2px 0;
+  background:none;border:none;cursor:pointer;
+  color:var(--ink);
+  font-family:"PT Mono",monospace;
+  font-size:12px;letter-spacing:.06em;
+  text-align:left;white-space:nowrap;
+  opacity:.34;
+  transition:opacity .35s ease, transform .5s cubic-bezier(.76,0,.2,1);
+}
+.tick:hover{opacity:.7;transform:translateX(2px)}
+.tick:focus-visible{outline:none;opacity:.85}
+/* The active item stays in flow and is merely invisible; removing it
+   would shift every neighbouring label by its own height. */
+.tick.hidden{visibility:hidden}
+
+/* Flying copy of a title, travelling between the menu and the heading.
+   Not called .ghost: that name is already a button variant, and a rule
+   matching both turns every outline button into an unclickable phantom. */
+.title-ghost{
+  position:fixed;z-index:60;margin:0;
+  font-family:"PT Mono",monospace;
+  white-space:nowrap;pointer-events:none;
+  transform-origin:left center;
+  transition:left 1.05s cubic-bezier(.62,0,.14,1),
+             top 1.05s cubic-bezier(.62,0,.14,1),
+             font-size 1.05s cubic-bezier(.62,0,.14,1),
+             letter-spacing 1.05s cubic-bezier(.62,0,.14,1),
+             line-height 1.05s cubic-bezier(.62,0,.14,1),
+             padding 1.05s cubic-bezier(.62,0,.14,1),
+             font-weight 1.05s ease,
+             opacity .8s ease, color .9s ease;
+}
+
+/* The real heading stays hidden until the ghost lands. */
+.hb{display:inline-block}
+.hb.arriving{opacity:0;transition:none}
+.hx{display:inline-block;opacity:0}
+.hx.ready{opacity:1}
+/* Each character drifts in out of focus and settles into place. */
+.hx .pt{
+  display:inline-block;white-space:pre;
+  opacity:0;
+  filter:blur(8px);
+  transform:translate(var(--dx,30px),var(--dy,0)) scale(1.6) rotate(var(--rot,0));
+  transition:opacity .95s ease,
+             filter 1.05s ease,
+             transform 1.15s cubic-bezier(.58,0,.16,1);
+}
+.hx .pt.on{opacity:1;filter:blur(0);transform:none}
+
+/* Going away is the same movement in reverse, only quicker: the page it sits
+   on starts fading shortly after, and an unhurried exit would be cut in half
+   and read as the text simply vanishing. */
+.hx.leaving .pt{
+  transition:opacity .34s ease,
+             filter .4s ease,
+             transform .46s cubic-bezier(.4,0,.22,1);
+}
+
+
+/* One letter, mid-turn. */
+.flip{
+  display:inline-block;white-space:pre;
+  backface-visibility:hidden;
+  will-change:transform;
+}
+
+/* The old letters spend the turn here, pinned to the coordinates they had
+   before the paragraph was re-set in another language. */
+.flip-layer{
+  position:fixed;inset:0;z-index:55;
+  pointer-events:none;
+}

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<script>document.documentElement.classList.add('js')</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painted Fox Studio</title>
+<meta name="description" content="Painted Fox Studio — вебдизайн і розробка сайтів для невеликого бізнесу.">
+
+<link rel="icon" href="assets/logo/favicon.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Arsenal:wght@400;700&family=Caveat:wght@400;600&family=Marcellus&family=PT+Mono&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/album.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/rail.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<!-- Watercolour filter: displaces edges, bleeds them, then adds pigment grain. -->
+<svg class="svg-defs" width="0" height="0" aria-hidden="true">
+  <!-- Ragged edge for the theme flood: turbulence displaces the boundary,
+       so pigment creeps into the paper instead of fading out of focus. -->
+  <filter id="paintEdge" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.011 0.013" numOctaves="4" seed="11" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="34" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feGaussianBlur in="d" stdDeviation="1.2"/>
+  </filter>
+
+</svg>
+
+<div class="paper-bg"></div>
+
+<header>
+  <button class="theme" id="theme" type="button" aria-label="Перемкнути тему">
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="12" cy="12" r="4.4"/>
+      <path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/>
+    </svg>
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1z"/>
+    </svg>
+  </button>
+
+  <div class="langs" id="langs">
+    <button type="button" data-lang="uk" aria-pressed="true">UK</button>
+    <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+    <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<div class="book" id="book">
+
+  <!-- the one sheet everything in the album sits on -->
+  <div class="surface papered"></div>
+
+
+  <!-- ─── Cover ─────────────────────────────────────────── -->
+  <section class="hero woven" id="cover">
+    <div class="hero-inner">
+      <svg class="fox" id="fox" viewBox="0 0 208 190.3" role="img" aria-label="Painted Fox Studio">
+        <path fill="currentColor" fill-rule="evenodd" d="M139.10,4.24 L138.30,4.36 Q136.70,4.60 136.91,6.20 L142.94,52.85 Q143.50,57.20 142.54,61.48 L142.06,63.62 Q141.10,67.90 136.76,68.50 L85.43,75.64 Q78.50,76.60 74.61,82.42 L65.49,96.08 Q61.60,101.90 54.67,102.91 L10.47,109.36 Q4.00,110.30 4.52,116.82 L4.78,120.08 Q5.30,126.60 10.68,130.33 L22.05,138.21 Q27.80,142.20 34.68,143.47 L84.92,152.73 Q91.80,154.00 97.21,158.44 L125.79,181.86 Q131.20,186.30 133.20,179.59 L135.30,172.51 Q137.30,165.80 143.98,167.91 L168.02,175.49 Q174.70,177.60 175.54,170.65 L177.86,151.65 Q178.70,144.70 185.63,145.69 L197.07,147.31 Q204.00,148.30 203.53,141.32 L199.37,79.38 Q198.90,72.40 196.15,65.96 L181.25,31.14 Q178.50,24.70 172.36,21.34 L142.12,4.78 Q140.70,4.00 139.10,4.24 Z M128.96,102.99 L123.73,109.61 Q120.50,113.70 115.34,114.46 L111.21,115.07 Q107.60,115.60 104.96,113.08 L103.64,111.82 Q101.00,109.30 102.59,106.01 L103.70,103.72 Q105.50,100.00 109.62,99.63 L126.33,98.13 Q133.30,97.50 128.96,102.99 Z M84.13,10.95 L90.27,62.05 Q91.10,69.00 98.04,68.06 L128.96,63.84 Q135.90,62.90 133.34,56.39 L122.16,28.01 Q119.60,21.50 113.29,18.46 L89.61,7.04 Q83.30,4.00 84.13,10.95 Z"/>
+        <!-- The clip is a touch larger than the eye itself: cut exactly on the
+             outline, the anti-aliased edges of lid and mark leave a bright
+             hairline between them. -->
+        <clipPath id="eyeClip">
+          <path d="M128.96,102.99 L123.73,109.61 Q120.50,113.70 115.34,114.46 L111.21,115.07 Q107.60,115.60 104.96,113.08 L103.64,111.82 Q101.00,109.30 102.59,106.01 L103.70,103.72 Q105.50,100.00 109.62,99.63 L126.33,98.13 Q133.30,97.50 128.96,102.99 Z"
+                transform="translate(117.15 106.55) scale(1.09) translate(-117.15 -106.55)"/>
+        </clipPath>
+        <g clip-path="url(#eyeClip)">
+          <rect class="lid lid-top" x="96" y="85"    width="44" height="22.5" fill="currentColor"/>
+          <rect class="lid lid-bot" x="96" y="105.5" width="44" height="23"   fill="currentColor"/>
+        </g>
+      </svg>
+
+      <h1 class="wordmark type">
+        <span class="wm-1" data-tw>PAINTED FOX</span>
+        <span class="wm-2" data-tw>STUDIO</span>
+      </h1>
+
+      <p class="lede" data-i="intro" data-dust>Сайти для невеликого бізнесу — від готового авторського дизайну до повністю індивідуального.</p>
+
+      <div class="btns btns-centred">
+        <a class="btn" href="pricing.html" data-i="heroCta">Хочу сайт</a>
+      </div>
+    </div>
+
+    <div class="hero-hint">
+      <span class="label" data-i="scroll" data-dust>ГОРТАТИ</span>
+      <svg viewBox="0 0 15 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+        <path d="M1.5 1.5 L7.5 7.5 L13.5 1.5"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ─── 1 · Work ──────────────────────────────────────── -->
+  <section class="page" data-page="1">
+    <div class="page-inner two">
+      <div>
+        <h2 class="type"><span class="hb" data-i="p1h">Роботи</span><span class="hx" data-i="p1x"></span></h2>
+        <p class="lede" data-i="p1p" data-dust>Чотири проєкти різного масштабу — від готового авторського дизайну до повністю індивідуальної сцени.</p>
+      </div>
+
+      <div class="works-row">
+        <a class="polaroid" href="https://tetiana-zavialova.com" target="_blank" rel="noopener">
+          <span class="shot">
+            <img src="assets/shots/zavialova.jpg" alt="" loading="lazy" decoding="async" width="640" height="400">
+          </span>
+          <span class="cap" data-i="cap1">Tetiana Zavialova</span>
+        </a>
+
+        <a class="polaroid" href="https://anna-gura.github.io/Transition-Point" target="_blank" rel="noopener">
+          <span class="shot">
+            <img src="assets/shots/transition-point.jpg" alt="" loading="lazy" decoding="async" width="640" height="400">
+          </span>
+          <span class="cap" data-i="cap2">Точка переходу</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 2 · Tools ─────────────────────────────────────── -->
+  <section class="page" data-page="2">
+    <div class="page-inner two">
+      <div>
+        <h2 class="type"><span class="hb" data-i="p2h">Інструменти</span><span class="hx" data-i="p2x"> безкоштовні</span></h2>
+      </div>
+
+      <div>
+        <p class="lede" data-i="p2p" data-dust>Індивідуальна робота платна. Але все, що я роблю не для одного клієнта, а для всіх — віддаю безкоштовно й з відкритим кодом. Так з'явилася Mirra, так буде далі.</p>
+
+        <div class="works-row side-note">
+          <div class="sticker-wrap">
+            <div class="sticker">
+              <p class="hand" data-i="note1">Індивідуально — платно.</p>
+              <p class="hand" data-i="note2">Інструменти — подарунок.</p>
+            </div>
+            <span class="curl"></span>
+          </div>
+
+          <div class="works-cta">
+            <a class="btn ghost" href="https://mirra.day" data-i="freebie">Халява →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 3 · Pricing ───────────────────────────────────── -->
+  <section class="page" data-page="3">
+    <div class="page-inner two">
+      <div>
+        <h2 class="type"><span class="hb" data-i="p3h">Ціни</span><span class="hx" data-i="p3x"> фіксовані</span></h2>
+      </div>
+
+      <div>
+        <p class="lede" data-i="p3p" data-dust>Суму називаю до старту, після короткого брифа. Якщо я не вклалася в оцінку — це мій ризик, не ваш. Мінімальний проєкт — від $500.</p>
+        <div class="btns">
+          <a class="btn" href="pricing.html" data-i="cta1">Порахувати бюджет</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 4 · About ─────────────────────────────────────── -->
+  <section class="page" data-page="4">
+    <div class="page-inner two">
+      <div>
+        <h2 class="type"><span class="hb" data-i="p4h">Про мене</span><span class="hx" data-i="p4x"></span></h2>
+      </div>
+
+      <div>
+        <p class="lede" data-i="p4p" data-dust>Мене звати Анна. Навчаюся на кібербезпеку й люблю речі, в яких відчувається рука автора.</p>
+        <p class="lede" data-i="p4p2" data-dust>Лис — з Франка, з місця, де я виросла. Фарбований тому, що змінює стиль, залишаючись собою.</p>
+        <div class="btns">
+          <a class="btn ghost" href="https://t.me/AnnGura" data-i="cta2">Написати мені</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="rail" id="rail">
+  <div class="zone top" id="zoneTop"></div>
+  <span class="rail-dot" id="railDot" aria-hidden="true"></span>
+  <div class="zone bottom" id="zoneBottom"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+/* Design tokens. Light theme is warm paper, dark theme is charcoal paper. */
+:root{
+  --paper:#F7F0E1;
+  --paper-2:#EFE5D2;
+  --ink:#3A3129;          /* typewriter ink: warm, never pure black */
+  --ink-soft:#5A4F44;
+  --pencil:#8B7F70;
+  --wash-warm:#C2714A;    /* watercolour washes */
+  --wash-cool:#6E8CA0;
+  --wash-olive:#93986A;
+  --accent:#B75C3C;
+  --brand:#C2512B;
+  --accent-rgb:183,92,60;
+  --ink-rgb:58,49,41;
+  --grain:.5;
+  --tone:.42;
+  --sheen:rgba(255,255,255,.4);
+}
+
+[data-theme="dark"]{
+  --paper:#211E1A;
+  --paper-2:#191614;
+  --ink:#EDE4D4;
+  --ink-soft:rgba(237,228,212,.82);
+  --pencil:rgba(237,228,212,.5);
+  --wash-warm:#8A4B32;
+  --wash-cool:#3E5567;
+  --wash-olive:#5A5E3E;
+  --accent:#D0805A;
+  --brand:#D9754C;
+  --accent-rgb:208,128,90;
+  --ink-rgb:237,228,212;
+  --grain:.22;
+  --tone:.3;
+  --sheen:rgba(255,248,236,.05);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html,body{height:100%}
+
+body{
+  background:var(--paper);
+  color:var(--ink-soft);
+  font-family:"Arsenal",system-ui,sans-serif;
+  font-size:19px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  transition:background .6s ease,color .6s ease;
+}

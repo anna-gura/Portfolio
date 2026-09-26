@@ -1,0 +1,46 @@
+/* Breakpoints and reduced-motion overrides, kept in one place. */
+
+@media (min-width:380px){
+  /* Button sits next to the photo rather than against the container edge. */
+  .works-row{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:18px;
+    flex-wrap:wrap;          /* does not fit: drops below the photo */
+    row-gap:22px;
+  }
+  .works-row > .polaroid,
+  .works-row > .sticker-wrap{flex:0 0 auto;margin:0}
+  /* The button fills the remaining width and centres inside it,
+     mirroring the block on the left. */
+  .works-cta{
+    flex:1 1 auto;margin:0;min-width:0;
+    display:flex;justify-content:center;align-items:center;
+    align-self:stretch;
+  }
+}
+
+@media (max-width:720px){
+  .polaroid{width:min(152px,40vw)}
+  .polaroid{padding:7px 7px 26px}
+  .polaroid .cap{font-size:14px;margin-top:7px}
+  .sticker-wrap{max-width:min(190px,52vw)}
+  .sticker .hand{font-size:15px}
+}
+
+@media (max-width:720px){
+  .two{grid-template-columns:1fr;gap:20px}
+  .rail{left:11px}
+  .tick{font-size:10px;letter-spacing:.04em}
+  .zone.top{top:78px}
+  .zone.bottom{bottom:74px}
+  .book::before{width:54px}
+  .page{padding-left:46px;padding-right:18px}
+  .hero{padding-left:26px;padding-right:26px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .page,.hero{transition-duration:.01ms}
+  .hero-hint svg{animation:none}
+}

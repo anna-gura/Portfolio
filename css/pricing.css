@@ -1,0 +1,418 @@
+/* Pricing configurator, built from the same materials as the album:
+   the same paper, ink, typewriter labels and accent.
+   Unlike the album this page scrolls normally — it is a working document,
+   not something to leaf through. */
+
+html, body { height: auto; overflow: visible; }
+/* the whole page is one sheet here, so the texture lives on <body> */
+body.papered::before, body.papered::after{position:fixed}
+
+.wrap{
+  position:relative;z-index:2;
+  max-width:860px;margin:0 auto;
+  padding:clamp(86px,10vw,110px) clamp(20px,5vw,40px) 0;
+}
+
+/* ─── header ──────────────────────────────────────────── */
+.eyebrow{margin-bottom:26px}
+.back{
+  font-family:"PT Mono",monospace;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--pencil);text-decoration:none;
+  transition:color .25s ease;
+}
+.back:hover,.back:focus-visible{color:var(--accent)}
+
+h1{
+  font-family:"PT Mono",monospace;
+  font-size:clamp(23px,4.2vw,38px);
+  font-weight:400;line-height:1.28;color:var(--ink);
+  max-width:20ch;
+}
+.lede{margin-top:16px;max-width:56ch}
+
+h2{
+  font-family:"PT Mono",monospace;
+  font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--pencil);font-weight:400;
+  margin:54px 0 4px;padding-bottom:12px;
+  border-bottom:1px solid rgba(var(--ink-rgb),.14);
+}
+.hint{font-size:14px;color:var(--pencil);margin:14px 0 2px}
+
+/* ─── one option ──────────────────────────────────────── */
+.row{
+  display:flex;align-items:center;gap:16px;
+  padding:16px 0;
+  border-bottom:1px solid rgba(var(--ink-rgb),.1);
+}
+.row .txt{flex:1;min-width:0}
+.row .txt b{display:block;font-weight:400;color:var(--ink)}
+.row .txt small{
+  display:block;color:var(--pencil);
+  font-size:13.5px;line-height:1.45;margin-top:3px;
+}
+.row .cost{
+  flex:none;white-space:nowrap;
+  font-family:"PT Mono",monospace;
+  font-size:12.5px;color:var(--pencil);
+}
+.row.active .cost{color:var(--accent)}
+
+/* checkbox and radio, drawn rather than restyled */
+.check{flex:none;width:21px;height:21px;position:relative;cursor:pointer}
+.check input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.check span{
+  display:block;width:21px;height:21px;
+  border:1px solid rgba(var(--ink-rgb),.28);
+  background:transparent;pointer-events:none;
+  transition:background .2s ease,border-color .2s ease;
+}
+.check input:checked + span{background:var(--accent);border-color:var(--accent)}
+.check input:checked + span::after{
+  content:"";position:absolute;left:7px;top:3px;
+  width:6px;height:11px;border:solid var(--paper);
+  border-width:0 1.8px 1.8px 0;transform:rotate(42deg);
+}
+.check input:focus-visible + span{box-shadow:0 0 0 3px rgba(var(--accent-rgb),.35)}
+
+.check.radio span{border-radius:50%}
+.check.radio input:checked + span::after{
+  left:6px;top:6px;width:7px;height:7px;
+  border:none;background:var(--paper);border-radius:50%;transform:none;
+}
+
+/* ─── counter ─────────────────────────────────────────── */
+.stepper{flex:none;display:flex;align-items:center;gap:3px}
+.stepper button{
+  width:34px;height:34px;
+  border:1px solid rgba(var(--ink-rgb),.24);
+  background:transparent;color:var(--ink-soft);
+  font:inherit;font-size:17px;line-height:1;
+  cursor:pointer;border-radius:999px;
+  transition:border-color .2s ease,color .2s ease,opacity .2s ease;
+}
+.stepper button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.stepper button:disabled{opacity:.3;cursor:default}
+.stepper button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.stepper output{
+  min-width:42px;text-align:center;
+  font-family:"PT Mono",monospace;font-size:15px;color:var(--ink);
+}
+
+/* ─── running total ───────────────────────────────────── */
+.summary{
+  position:sticky;bottom:0;z-index:5;
+  margin:40px calc(clamp(20px,5vw,40px) * -1) 0;
+  padding:20px clamp(20px,5vw,40px) 24px;
+  background:var(--paper);
+  border-top:1px solid rgba(var(--ink-rgb),.22);
+}
+.total{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.total b{
+  font-family:"PT Mono",monospace;
+  font-size:clamp(27px,5.2vw,40px);font-weight:400;
+  line-height:1.1;color:var(--accent);
+}
+.total i{font-style:normal;font-size:17px;color:var(--ink-soft)}
+.range{margin-top:8px;font-size:13.5px;color:var(--pencil)}
+.range em{font-style:normal;color:var(--ink-soft)}
+.picked{margin-top:12px;font-size:13px;color:var(--pencil);line-height:1.6;max-width:70ch}
+
+.note{
+  margin-top:44px;padding-top:22px;
+  border-top:1px solid rgba(var(--ink-rgb),.1);
+  font-size:14px;color:var(--pencil);max-width:62ch;
+}
+
+@media (max-width:620px){
+  .row{gap:12px;align-items:flex-start}
+  .row .cost{padding-top:2px}
+  .stepper button{width:31px;height:31px}
+}
+
+/* ─── header, shared with the album ───────────────────── */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;
+  padding:calc(20px + env(safe-area-inset-top,0px)) clamp(18px,4vw,40px) 22px;
+}
+.langs{display:flex;gap:1px}
+.langs button{
+  background:none;border:none;cursor:pointer;
+  font-family:"PT Mono",monospace;font-size:11px;letter-spacing:.1em;
+  color:var(--pencil);padding:5px;transition:color .2s ease;
+}
+.langs button:hover{color:var(--ink)}
+.langs button[aria-pressed="true"]{color:var(--accent)}
+.theme{
+  background:none;border:none;cursor:pointer;padding:0;
+  width:32px;height:32px;display:grid;place-items:center;color:var(--pencil);
+  transition:color .25s ease,transform .5s ease;
+}
+.theme:hover{color:var(--accent);transform:rotate(16deg)}
+.theme svg{width:20px;height:20px}
+.theme .moon{display:none}
+[data-theme="dark"] .theme .sun{display:none}
+[data-theme="dark"] .theme .moon{display:block}
+
+/* ─── desktop: builder on the left, running total on the right ─── */
+.wrap{max-width:1180px}
+
+.desk{display:block}
+
+@media (min-width:1000px){
+  /* The running total is a separate sheet laid over the page: it reaches
+     both edges of the screen and casts a shadow onto the paper beneath. */
+  .summary{
+    position:fixed;top:0;right:0;bottom:0;
+    width:clamp(320px,26vw,400px);
+    margin:0;border-top:none;
+    display:flex;align-items:center;
+    padding:32px clamp(26px,2.4vw,40px);
+    background:var(--paper);
+    border-left:1px solid rgba(var(--ink-rgb),.12);
+    box-shadow:
+      -2px 0 4px rgba(90,70,48,.10),
+      -14px 0 34px rgba(90,70,48,.14);
+    z-index:25;
+  }
+  [data-theme="dark"] .summary{
+    box-shadow:
+      -2px 0 4px rgba(0,0,0,.45),
+      -16px 0 40px rgba(0,0,0,.4);
+  }
+  .summary-inner{width:100%;padding:0;border:none;background:none}
+
+  /* The builder keeps clear of the panel. */
+  .wrap{padding-right:clamp(348px,28vw,432px)}
+  header{padding-right:clamp(348px,28vw,432px)}
+  .summary{padding-top:96px}
+  .builder .note{margin-bottom:72px}
+}
+
+/* Options read faster in two columns once there is room. */
+@media (min-width:620px){
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;column-gap:clamp(20px,3vw,40px)}
+}
+
+/* ─── motion ladder ───────────────────────────────────── */
+.steps{display:grid;gap:12px;margin-top:6px}
+
+.step{
+  display:block;position:relative;cursor:pointer;
+  padding:16px 18px;
+  border:1px solid rgba(var(--ink-rgb),.14);
+  transition:border-color .25s ease,background .25s ease,transform .25s ease;
+}
+.step input{position:absolute;opacity:0;pointer-events:none}
+.step:hover{border-color:rgba(var(--accent-rgb),.5)}
+.step.active{
+  border-color:var(--accent);
+  background:rgba(var(--accent-rgb),.05);
+}
+.step:focus-within{outline:2px solid var(--accent);outline-offset:3px}
+
+.step-head{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  margin-bottom:6px;
+}
+.step-head b{font-weight:400;color:var(--ink);font-size:16.5px}
+.step-head .cost{margin-left:auto}
+.step-n{
+  font-family:"PT Mono",monospace;
+  font-size:11px;letter-spacing:.18em;color:var(--pencil);
+}
+.step small{
+  display:block;color:var(--pencil);
+  font-size:13.5px;line-height:1.5;
+}
+.step.active .step-n{color:var(--accent)}
+
+/* The top step is the one that costs most; it should look like it. */
+.step-top{
+  border-color:rgba(var(--ink-rgb),.26);
+  background:
+    linear-gradient(140deg,
+      rgba(var(--accent-rgb),.07) 0%,
+      rgba(var(--accent-rgb),0) 55%);
+}
+.step-top.active{
+  border-color:var(--accent);
+  background:
+    linear-gradient(140deg,
+      rgba(var(--accent-rgb),.16) 0%,
+      rgba(var(--accent-rgb),.03) 60%);
+  box-shadow:0 6px 22px rgba(var(--accent-rgb),.14);
+}
+.step-top .step-head b{letter-spacing:.01em}
+
+.showcase{
+  display:inline-block;margin-top:10px;
+  font-family:"PT Mono",monospace;font-size:11px;letter-spacing:.14em;
+  color:var(--accent);text-decoration:none;
+  border-bottom:1px solid rgba(var(--accent-rgb),.4);
+  padding-bottom:2px;
+}
+.showcase:hover{border-bottom-color:var(--accent)}
+
+/* ─── motion ladder: which step is chosen must be unmistakable ─── */
+.step{padding-left:52px}
+.step-tick{
+  position:absolute;left:18px;top:50%;
+  width:17px;height:17px;border-radius:50%;
+  transform:translateY(-50%);
+  border:1px solid rgba(var(--ink-rgb),.3);
+  transition:border-color .25s ease,background .25s ease;
+}
+.step.active .step-tick{
+  border-color:var(--accent);background:var(--accent);
+}
+.step.active .step-tick::after{
+  content:"";position:absolute;left:5px;top:3px;
+  width:5px;height:9px;border:solid var(--paper);
+  border-width:0 1.7px 1.7px 0;transform:rotate(42deg);
+}
+.step.active{box-shadow:inset 3px 0 0 var(--accent)}
+
+/* ─── the top step: unpolished gold ───────────────────── */
+.step-top{
+  border-color:rgba(140,108,44,.5);
+  background:
+    /* brushed, not mirrored: the highlight is broad and dull */
+    linear-gradient(118deg,
+      rgba(214,178,96,.30) 0%,
+      rgba(168,128,54,.20) 34%,
+      rgba(122,92,38,.24) 62%,
+      rgba(198,164,92,.26) 100%),
+    /* casting grain, so the surface reads as metal rather than paint */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size:auto, 220px 220px;
+  background-blend-mode:normal, overlay;
+  box-shadow:
+    inset 0 1px 0 rgba(255,238,190,.34),
+    inset 0 -1px 0 rgba(60,42,12,.3);
+}
+.step-top .step-head b{color:#7A5A1E}
+.step-top .step-n{color:rgba(122,90,30,.75)}
+.step-top small{color:rgba(74,56,24,.82)}
+.step-top .cost{color:#7A5A1E}
+.step-top .showcase{color:#7A5A1E;border-bottom-color:rgba(122,90,30,.45)}
+.step-top .step-tick{border-color:rgba(122,90,30,.55)}
+
+.step-top.active{
+  border-color:#A8802F;
+  box-shadow:
+    inset 3px 0 0 #A8802F,
+    inset 0 1px 0 rgba(255,238,190,.4),
+    0 8px 26px rgba(122,90,30,.22);
+}
+.step-top.active .step-tick{border-color:#A8802F;background:#A8802F}
+.step-top.active .step-tick::after{border-color:#F6ECD4}
+
+[data-theme="dark"] .step-top{
+  border-color:rgba(190,150,70,.45);
+  background:
+    linear-gradient(118deg,
+      rgba(196,158,80,.26) 0%,
+      rgba(140,104,40,.2) 36%,
+      rgba(96,70,26,.26) 64%,
+      rgba(176,142,74,.22) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size:auto, 220px 220px;
+  background-blend-mode:normal, overlay;
+}
+[data-theme="dark"] .step-top .step-head b,
+[data-theme="dark"] .step-top .cost,
+[data-theme="dark"] .step-top .showcase{color:#E3C07E}
+[data-theme="dark"] .step-top small{color:rgba(230,208,168,.8)}
+[data-theme="dark"] .step-top .step-n{color:rgba(227,192,126,.7)}
+
+
+/* dust and counter styles are shared with the album */
+/* Dust does not travel: the old text loses focus and falls apart on the spot,
+   the new one gathers in the same place. Movement would read as sliding. */
+.word{white-space:nowrap}
+/* The real text fades up under the last of the particles. */
+[data-dust].settling{animation:settle .4s ease both}
+@keyframes settle{from{opacity:0}to{opacity:1}}
+.dust{
+  display:inline-block;white-space:pre;
+  transition:opacity .72s ease, filter .8s ease,
+             transform .8s cubic-bezier(.4,0,.2,1);
+  transition-delay:var(--d,0ms);
+  will-change:transform,opacity,filter;
+}
+.scattered .dust{
+  opacity:0;
+  filter:blur(9px);
+  transform:scale(var(--s,1.2));
+}
+.gathered .dust{opacity:1;filter:blur(0);transform:none}
+
+/* Nothing shows before the script has had a chance to split it. */
+html.js [data-dust]{opacity:0}
+html.js [data-dust].gathered,
+html.js [data-dust].scattered{opacity:1}
+
+to{transform:translateY(0)}}
+
+
+
+
+
+
+/* ─── price counter ───────────────────────────────────── */
+/* ─── price counter ───────────────────────────────────── */
+.odo{display:inline-flex;align-items:baseline;font-variant-numeric:tabular-nums}
+.odo-cell{
+  display:inline-block;
+  height:1.06em;overflow:hidden;vertical-align:baseline;
+  text-align:center;
+}
+.odo-strip{
+  display:block;
+  transform:translateY(0);
+  transition:transform .44s cubic-bezier(.32,0,.2,1);
+}
+.odo-strip.roll{transform:translateY(-1.06em)}
+.odo-strip.settled{transition:none}
+.odo-strip > span{display:block;height:1.06em;line-height:1.06em}
+
+/* ─── theme flood ─────────────────────────────────────── */
+/* The old state sits still while the new one is revealed through a growing
+   circle; without this both would cross-fade and the edge would vanish. */
+::view-transition-old(root){animation:none}
+::view-transition-new(root){animation:none;mix-blend-mode:normal}
+::view-transition-old(root){z-index:0}
+::view-transition-new(root){z-index:1}
+
+
+/* ─── order button in the summary ─────────────────────── */
+.btn.order{
+  display:inline-block;margin-top:20px;
+  text-decoration:none;cursor:pointer;
+  font-family:"PT Mono",monospace;font-size:14px;
+  padding:13px 27px;border-radius:999px;
+  color:#FBF6EE;background:rgba(var(--accent-rgb),.92);
+  border:1px solid rgba(255,255,255,.26);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34), 0 5px 13px rgba(90,70,48,.16);
+  transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+.btn.order:hover{transform:translateY(-1.5px);background:rgba(var(--accent-rgb),1)}
+.btn.order:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+/* The switches stay on screen whatever is scrolling underneath. */
+header{position:fixed;top:0;left:0;right:0;z-index:60}
+
+/* A view transition snapshots the whole page. Blended texture layers make
+   that snapshot expensive, so they are dropped for the duration — the flood
+   covers the difference and the switch stops stuttering. */
+/* The texture stays in the snapshot, so the flood carries the new paper with
+   it instead of laying down flat colour and painting the grain on afterwards.
+   What is dropped instead is everything that would animate underneath. */
+html.switching .dust,
+html.switching .pt{transition:none}
+html.switching .fox.blink .lid-top,
+html.switching .fox.blink .lid-bot{animation:none}

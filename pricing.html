@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<script>document.documentElement.classList.add('js')</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painted Fox Studio — зберіть свій проєкт</title>
+<meta name="description" content="Орієнтовна вартість сайту: зберіть проєкт і подивіться, з чого складається ціна.">
+
+<link rel="icon" href="assets/logo/favicon.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Arsenal:wght@400;700&family=PT+Mono&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/pricing.css">
+</head>
+<body class="papered">
+
+<svg class="svg-defs" width="0" height="0" aria-hidden="true">
+  <filter id="paintEdge" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.011 0.013" numOctaves="4" seed="11" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="34" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feGaussianBlur in="d" stdDeviation="1.2"/>
+  </filter>
+</svg>
+
+<div class="paper-bg"></div>
+
+<header>
+  <button class="theme" id="theme" type="button" aria-label="Перемкнути тему">
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="12" cy="12" r="4.4"/>
+      <path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/>
+    </svg>
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1z"/>
+    </svg>
+  </button>
+
+  <div class="langs" id="langs">
+    <button type="button" data-lang="uk" aria-pressed="true">UK</button>
+    <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+    <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <p class="eyebrow"><a class="back" href="index.html" data-i="back">← Painted Fox Studio</a></p>
+  <h1 data-i="title">Зберіть проєкт і подивіться на ціну</h1>
+  <p class="lede" data-i="lede" data-dust>Біля кожного пункту видно, скільки він додає. Якщо бюджет не сходиться — знімайте позначки й дивіться, де компроміс дешевший за очікування.</p>
+
+  <div class="desk">
+
+    <div class="builder">
+      <h2 data-i="hBase">Основа</h2>
+      <p class="hint" data-i="hBaseHint">З чого починаємо. Далі все додається зверху.</p>
+      <div id="bases"></div>
+
+      <h2 data-i="hScope">Обсяг</h2>
+      <div id="counts"></div>
+
+      <h2 data-i="hMotion">Рух і графіка</h2>
+      <div class="steps" id="motion"></div>
+
+      <h2 data-i="hExtras">Додатково</h2>
+      <div class="grid-2" id="extras"></div>
+
+      <h2 data-i="hAfter">Після запуску</h2>
+      <div id="after"></div>
+
+      <p class="note" data-i="note" data-dust>Це прикидка, а не рахунок. Реальна ціна фіксується після короткого брифа — і вже не змінюється: якщо я не вклалася в оцінку, це мій ризик, не ваш. Мінімальний проєкт — від $500.</p>
+    </div>
+
+    <aside class="summary woven">
+      <div class="summary-inner">
+        <div class="total">
+          <b id="big">≈ $950</b>
+          <i id="addon"></i>
+        </div>
+        <p class="range" id="rangeLine"></p>
+        <p class="picked" id="picked"></p>
+        <a class="btn order" id="order" href="https://t.me/AnnGura" data-i="order">Замовити</a>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script type="module" src="js/pricing.js"></script>
+</body>
+</html>

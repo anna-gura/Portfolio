@@ -1,0 +1,139 @@
+/* Paper surfaces.
+
+   The texture is mixed INSIDE each surface rather than laid over the whole
+   screen. A full-screen blend layer tints every object on the page and, worse,
+   makes the browser blend against an unprepared backdrop while a page is
+   animating — which shows up as a white flash mid-turn. */
+
+.paper-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(130% 100% at 16% -14%, var(--sheen) 0%, rgba(255,255,255,0) 56%),
+    radial-gradient(100% 80% at 90% 112%, var(--paper-2) 0%, rgba(0,0,0,0) 60%);
+}
+/* Neither pool of light survives on charcoal paper: both stop looking like
+   light falling across a sheet and start looking like dirt on it. The dark
+   surface is carried by its grain alone. */
+[data-theme="dark"] .paper-bg{background:none}
+
+/* Two surfaces, both built the same way: fibre painted into the element
+   itself rather than laid over the screen.
+
+   .papered  plain paper — pages, body copy
+   .woven    cloth — the cover and the price panel, where the surface is
+             meant to be felt rather than read through */
+
+.papered,.woven{position:relative;isolation:isolate;background:var(--paper)}
+.papered > *,.woven > *{position:relative;z-index:2}
+
+.papered::before,.papered::after,
+.woven::before,.woven::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+}
+
+/* fibre, shared */
+.papered::after,.woven::after{
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23a)'/%3E%3C/svg%3E");
+  background-size:170px 170px;
+  mix-blend-mode:multiply;opacity:var(--grain);
+}
+[data-theme="dark"] .papered::after,
+[data-theme="dark"] .woven::after{mix-blend-mode:screen;opacity:calc(var(--grain) * .7)}
+
+/* uneven tone of a sheet */
+.papered::before{
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='900' height='900' filter='url(%23t)'/%3E%3C/svg%3E");
+  /* stretched, not tiled: a 900px tile repeats and the join shows up as a
+     seam down the middle of a wide screen */
+  background-size:100% 100%;
+  background-repeat:no-repeat;
+  mix-blend-mode:soft-light;opacity:var(--tone);
+}
+/* The large-scale tone is stretched across the whole surface, so its noise
+   has one broad light area — on a light sheet that is unevenness, on a dark
+   one it is a smudge. Dark paper keeps its grain and nothing else. */
+[data-theme="dark"] .papered::before{background-image:none}
+
+/* two perpendicular threads plus slack in the weave */
+.woven::before{
+  background-image:
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,.06) 0 1px, rgba(255,255,255,.05) 1px 2px, rgba(0,0,0,0) 2px 4px),
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,.055) 0 1px, rgba(255,255,255,.045) 1px 2px, rgba(0,0,0,0) 2px 4px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='t2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='900' height='900' filter='url(%23t2)'/%3E%3C/svg%3E");
+  background-size:4px 4px, 4px 4px, 100% 100%;
+  background-repeat:repeat, repeat, no-repeat;
+  mix-blend-mode:soft-light;opacity:var(--tone);
+}
+/* Cloth keeps its threads in the dark; only the broad tone goes. */
+[data-theme="dark"] .woven::before{
+  background-image:
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,.06) 0 1px, rgba(255,255,255,.05) 1px 2px, rgba(0,0,0,0) 2px 4px),
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,.055) 0 1px, rgba(255,255,255,.045) 1px 2px, rgba(0,0,0,0) 2px 4px);
+  background-size:4px 4px, 4px 4px;
+  mix-blend-mode:overlay;
+  opacity:calc(var(--tone) * .8);
+}
+
+/* Typewriter lettering: PT Mono with per-character jitter applied in JS. */
+.type{
+  font-family:"PT Mono","JetBrains Mono",monospace;
+  color:var(--ink);
+  letter-spacing:.01em;
+}
+/* Uneven strike: every glyph sits a little differently. */
+.type span{display:inline-block;white-space:pre}
+
+h1.type{
+  font-size:clamp(26px,4.9vw,47px);
+  line-height:1.3;font-weight:400;
+}
+h2.type{
+  font-size:clamp(21px,3.4vw,31px);
+  line-height:1.35;font-weight:400;margin-bottom:20px;
+}
+.label{
+  font-family:"PT Mono",monospace;
+  font-size:12px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--pencil);
+}
+.lede + .lede{margin-top:14px}
+.lede{max-width:56ch;font-size:clamp(17.5px,2.1vw,20.5px)}
+.hand{font-family:"Caveat",cursive;font-size:24px;line-height:1.28}
+
+
+/* Wordmark: a roman capital face in the brand terracotta, set wide.
+   It reads as a signature next to the typewriter body copy. */
+.wordmark{
+  font-family:"Marcellus","Cormorant Garamond",Georgia,serif !important;
+  color:var(--brand) !important;
+}
+.wordmark .wm-2{opacity:.82}
+
+/* The fox blinks. Two lids slide towards each other and meet at the middle
+   of the eye, which is how an eye actually closes — scaling one shape from
+   its centre opens outwards instead. */
+.fox .lid{fill:currentColor}
+.fox .lid-top{transform:translateY(-20px)}
+.fox .lid-bot{transform:translateY(20px)}
+.fox.blink .lid-top{animation:lid-top .3s ease-in-out}
+.fox.blink .lid-bot{animation:lid-bot .3s ease-in-out}
+@keyframes lid-top{
+  0%{transform:translateY(-20px)}
+  46%{transform:translateY(0)}
+  100%{transform:translateY(-20px)}
+}
+@keyframes lid-bot{
+  0%{transform:translateY(20px)}
+  46%{transform:translateY(0)}
+  100%{transform:translateY(20px)}
+}
+
+
+/* Holder for SVG filter definitions: present in the document, never drawn. */
+.svg-defs{position:absolute}
