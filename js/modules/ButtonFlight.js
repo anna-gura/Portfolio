@@ -32,8 +32,22 @@ export class ButtonFlight {
     };
   }
 
-  /** The same, but for a button on a page that is not on screen yet. */
-  static #readFinal(el, page) {
+  /**
+   * The same, but where the button will be once its screen is in place.
+   *
+   * The cover is parked exactly one viewport above, so its final position is
+   * arithmetic — no need to touch it. Putting it down for a measurement and
+   * back again cancels the slide it is about to make.
+   */
+  static #readFinal(el) {
+    const cover = el.closest('.hero');
+    if (cover) {
+      const shot = ButtonFlight.#read(el);
+      if (cover.classList.contains('up')) shot.top += innerHeight;
+      return shot;
+    }
+
+    const page = el.closest('.page');
     if (!page) return ButtonFlight.#read(el);
 
     const className = page.className;
@@ -95,16 +109,19 @@ export class ButtonFlight {
   }
 
   /** The button on the arriving page has no counterpart: it draws itself in. */
-  static appear(to, toPage) {
+  static appear(to, delay = 0) {
     if (!to || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const token = ++ButtonFlight.#token;
-    const shot = ButtonFlight.#readFinal(to, toPage);
+    const shot = ButtonFlight.#readFinal(to);
     const frames = ButtonFlight.#draw(shot);
 
     to.style.visibility = 'hidden';
     const ghost = ButtonFlight.#ghost(shot, shot.label);
-    const options = { duration: ButtonFlight.GROW, easing: 'cubic-bezier(.62,0,.14,1)', fill: 'both' };
+    const options = {
+      duration: ButtonFlight.GROW, delay,
+      easing: 'cubic-bezier(.62,0,.14,1)', fill: 'both'
+    };
 
     ghost.animate(frames.box, options);
     ghost.querySelector('.now').animate(frames.label, options);
@@ -113,7 +130,7 @@ export class ButtonFlight {
       if (ButtonFlight.#token !== token) return;
       to.style.visibility = '';
       ghost.remove();
-    }, ButtonFlight.GROW);
+    }, delay + ButtonFlight.GROW);
   }
 
   /** Nothing on the next page to travel to: the button closes back to a dot. */
@@ -144,23 +161,39 @@ export class ButtonFlight {
   /**
    * @param {HTMLElement|null} from  button leaving
    * @param {HTMLElement|null} to    button arriving
-   * @param {HTMLElement|null} toPage  page the arriving button sits on
    */
-  static run(from, to, toPage) {
+  static run(from, to) {
     if (!from || !to || from === to) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const token = ++ButtonFlight.#token;
     const a = ButtonFlight.#read(from);
-    const b = ButtonFlight.#readFinal(to, toPage);
+    const b = ButtonFlight.#readFinal(to);
 
     from.style.visibility = 'hidden';
     to.style.visibility = 'hidden';
 
+    /* The two faces are clones of the real buttons rather than labels built
+       from their text. Rebuilt text sits a fraction off — word spacing and
+       padding are not the same once it is centred by hand — and that shows as
+       a nudge on the first and last frame. A clone cannot be off. */
     const ghost = document.createElement('div');
     ghost.className = 'btn-flight';
-    ghost.innerHTML =
-      `<span class="was">${a.label}</span><span class="now">${b.label}</span>`;
+
+    const face = (source, role) => {
+      const clone = source.cloneNode(true);
+      // keep the button's own classes: its padding and type are what put the
+      // label exactly where it sits in the real thing
+      clone.classList.add('flight-face', role);
+      clone.removeAttribute('href');
+      clone.removeAttribute('id');
+      clone.style.cssText =
+        'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'margin:0;visibility:visible;';
+      return clone;
+    };
+
+    ghost.append(face(from, 'was'), face(to, 'now'));
 
     const put = s => Object.assign(ghost.style, {
       left: `${s.left}px`, top: `${s.top}px`,

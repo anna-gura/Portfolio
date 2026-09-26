@@ -24,7 +24,7 @@ export const TRANSLATIONS = {
 
     p1h: 'Работы',
     p1x: '',
-    p1p: 'Четыре проекта разного масштаба — от готового авторского дизайна до полностью индивидуальной сцены.',
+    p1p: 'Проекты разного масштаба — от готового авторского дизайна до полностью индивидуальной сцены.',
     cap1: 'Tetiana Zavialova',
     cap2: 'Точка перехода',
 
@@ -54,7 +54,7 @@ export const TRANSLATIONS = {
 
     p1h: 'Work',
     p1x: '',
-    p1p: 'Four projects of different scale — from a ready-made design of mine to a fully bespoke scene.',
+    p1p: 'Projects of different scale — from a ready-made design of mine to a fully bespoke scene.',
     cap1: 'Tetiana Zavialova',
     cap2: 'Transition Point',
 

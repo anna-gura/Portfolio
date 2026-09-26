@@ -137,3 +137,14 @@ h2.type{
 
 /* Holder for SVG filter definitions: present in the document, never drawn. */
 .svg-defs{position:absolute}
+
+
+/* Mobile browsers paint a blue wash over anything tapped, and on a switch
+   that is already animating it reads as the text being selected. */
+button, a, .tick, .polaroid, .langs, .theme{
+  -webkit-tap-highlight-color:transparent;
+}
+button, .tick, .langs, .theme{
+  -webkit-user-select:none;
+  user-select:none;
+}

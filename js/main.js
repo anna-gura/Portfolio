@@ -95,16 +95,20 @@ const book = new Book({
     // itself out of one when it turns up on a page that had none.
     const btnFrom = pageEl(from)?.querySelector('.btn');
     const btnTo = pageEl(to)?.querySelector('.btn');
-    const toPage = to === 0 ? null : pageEl(to);
 
     // prints and the sticky note shrink into their centre and grow back
     const objects = n => [...(pageEl(n)?.querySelectorAll('.polaroid, .sticker-wrap') ?? [])];
     Shrink.out(objects(from));
     Shrink.in(objects(to), 300);
 
-    if (btnFrom && btnTo) ButtonFlight.run(btnFrom, btnTo, toPage);
+    // Arriving at the cover, the button waits for the curtain to come down
+    // before it draws itself: growing while the screen is still travelling
+    // reads as a second copy sliding onto the first.
+    const wait = to === 0 ? 520 : 0;
+
+    if (btnFrom && btnTo) ButtonFlight.run(btnFrom, btnTo);
     else if (btnFrom) ButtonFlight.vanish(btnFrom);
-    else if (btnTo) ButtonFlight.appear(btnTo, toPage);
+    else if (btnTo) ButtonFlight.appear(btnTo, wait);
 
     if (parked) {
       cover.classList.add('up');
@@ -168,3 +172,5 @@ rail.layout(book.index);
 book.render();
 Dissolve.pageIn(pageEl(book.index));
 
+/* Tells the guard in <head> that the scripts are running. */
+document.documentElement.dataset.booted = 'true';

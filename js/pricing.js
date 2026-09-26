@@ -37,3 +37,5 @@ new I18n({
 
 document.querySelectorAll('[data-dust]').forEach(el => Dissolve.in(el));
 
+/* Tells the guard in <head> that the scripts are running. */
+document.documentElement.dataset.booted = 'true';

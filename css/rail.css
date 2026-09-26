@@ -85,10 +85,11 @@
 
 
 /* One letter, mid-turn. */
+/* No will-change here: with a page of text that would promote hundreds of
+   layers, and the cost of managing them outweighs anything it saves. */
 .flip{
   display:inline-block;white-space:pre;
   backface-visibility:hidden;
-  will-change:transform;
 }
 
 /* The old letters spend the turn here, pinned to the coordinates they had

@@ -1,7 +1,18 @@
 <!DOCTYPE html>
 <html lang="uk" data-theme="light">
 <head>
-<script>document.documentElement.classList.add('js')</script>
+<script>
+/* Text that will be animated is hidden until the scripts have split it, so it
+   does not flash before the first frame. If they never arrive — opened over
+   file://, a blocked module, a stale cache — the page must not stay empty:
+   the mark is dropped again and everything shows as plain text. */
+document.documentElement.classList.add('js');
+setTimeout(function () {
+  if (!document.documentElement.dataset.booted) {
+    document.documentElement.classList.remove('js');
+  }
+}, 1500);
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Painted Fox Studio</title>
@@ -103,7 +114,7 @@
     <div class="page-inner two">
       <div>
         <h2 class="type"><span class="hb" data-i="p1h">Роботи</span><span class="hx" data-i="p1x"></span></h2>
-        <p class="lede" data-i="p1p" data-dust>Чотири проєкти різного масштабу — від готового авторського дизайну до повністю індивідуальної сцени.</p>
+        <p class="lede" data-i="p1p" data-dust>Проєкти різного масштабу — від готового авторського дизайну до повністю індивідуальної сцени.</p>
       </div>
 
       <div class="works-row">

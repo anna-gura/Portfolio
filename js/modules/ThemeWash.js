@@ -10,7 +10,7 @@
  * fallback: a fake disc of flat colour would look worse than no animation.
  */
 export class ThemeWash {
-  static DURATION = 1000;
+  static DURATION = 850;
 
   /**
    * @param {HTMLElement} origin element the flood starts from

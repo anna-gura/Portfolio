@@ -258,8 +258,10 @@ html.switching .fox.blink .lid-bot{animation:none}
     font-size .9s ease,
     box-shadow .9s ease;
 }
-.btn-flight span{
-  grid-area:1/1;white-space:nowrap;
+/* The faces carry only their text: the box is drawn by the ghost itself. */
+.btn-flight .flight-face{
+  background:none;border-color:transparent;box-shadow:none;
+  white-space:nowrap;pointer-events:none;
   transition:opacity .5s ease;
 }
 .btn-flight .now{opacity:0}
