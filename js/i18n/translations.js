@@ -30,7 +30,7 @@ export const TRANSLATIONS = {
 
     p2h: 'Инструменты',
     p2x: ' бесплатные',
-    p2p: 'Индивидуальная работа платная. Но всё, что я делаю не для одного клиента, а для всех — отдаю бесплатно и с открытым кодом.',
+    p2p: 'Всё, что я делаю не для одного клиента, а для всех, отдаю бесплатно и с открытым кодом. Так появилась Mirra, так будет и дальше.',
     note1: 'Индивидуально — платно.',
     note2: 'Инструменты — подарок.',
     freebie: 'Халява →',
@@ -60,7 +60,7 @@ export const TRANSLATIONS = {
 
     p2h: 'Tools',
     p2x: ' are free',
-    p2p: 'Client work is paid. But anything I build for everyone rather than for one client is released free and open source.',
+    p2p: 'Anything I build for everyone rather than for one client is released free and open source. That is how Mirra came about, and it will stay that way.',
     note1: 'Client work is paid.',
     note2: 'Tools are a gift.',
     freebie: 'Free stuff →',

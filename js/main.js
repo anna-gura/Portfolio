@@ -144,13 +144,6 @@ const i18n = new I18n({
     // one wave for the whole page: measured together, they cannot land in
     // positions that another element is about to invalidate
     Flip.batch(pending);
-    for (const { el } of pending) {
-      // the flip leaves plain text behind; give the trailing words of a
-      // heading their particles back for the next page turn
-      if (el.classList.contains('hx')) {
-        setTimeout(() => MistText.settle(el), Flip.duration());
-      }
-    }
     pending.length = 0;
 
     language = lang;

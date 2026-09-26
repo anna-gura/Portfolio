@@ -59,6 +59,14 @@ export class MistText {
   /** Scatter them back — the arrival played backwards. */
   hide() {
     if (!this.el) return;
+
+    /* Anything that rewrites the element leaves plain text behind: a language
+       change, say. The particles are rebuilt here rather than straight after
+       that, where the rebuild would play as a second arrival. */
+    if (!this.el.querySelector('.pt')) {
+      MistText.settle(this.el);
+      void this.el.offsetWidth;
+    }
     this.el.classList.add('leaving');
     for (const span of this.el.querySelectorAll('.pt')) {
       span.style.transitionDelay = `${(Math.random() * 110).toFixed(0)}ms`;
@@ -101,7 +109,15 @@ export class MistText {
     if (!el) return;
     const mist = new MistText(el);
     el.classList.remove('leaving');
-    for (const span of mist.spans) span.classList.add('on');
+    // straight to the gathered state: with the transition live this would
+    // play the arrival a second time
+    for (const span of mist.spans) {
+      span.style.transition = 'none';
+      span.classList.add('on');
+    }
+    requestAnimationFrame(() => {
+      for (const span of mist.spans) span.style.transition = '';
+    });
   }
 
   /** Forget the cached source text, e.g. after a language switch. */
