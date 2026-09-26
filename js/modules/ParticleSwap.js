@@ -229,6 +229,9 @@ export class ParticleSwap {
     requestAnimationFrame(tick);
   }
 
+  /** Hook the caller sets, so this module need not know about the splitter. */
+  static flatten = null;
+
   /* ── page to page ────────────────────────────────────── */
 
   /**
@@ -260,6 +263,10 @@ export class ParticleSwap {
     for (const el of toEls) ParticleSwap.#hide(el);
     const b = ParticleSwap.#sample(toEls, w, h);
     for (const el of fromEls) ParticleSwap.#hide(el);
+
+    // The split characters were only needed to read the glyph rectangles.
+    // Leaving them in the document triples the cost of restyling the page.
+    ParticleSwap.flatten?.([...fromEls, ...toEls]);
 
     ParticleSwap.#play(a, b, w, h, reveal, token);
   }

@@ -24,6 +24,8 @@ const $ = id => document.getElementById(id);
 document.querySelectorAll('[data-tw]').forEach(el => Typewriter.apply(el));
 const wordmark = new Wordmark(document.querySelector('.wordmark'));
 
+ParticleSwap.flatten = els => els.forEach(el => Dissolve.flatten(el));
+
 new Theme($('theme'));
 new FoxBlink($('fox'));
 

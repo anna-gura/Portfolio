@@ -98,3 +98,5 @@
   position:fixed;inset:0;z-index:55;
   pointer-events:none;
 }
+/* One line of turning letters, travelling with the text it replaces. */
+.flip-ride{position:absolute;top:0;left:0}

@@ -81,11 +81,45 @@ export class Flip {
     return cells;
   }
 
+  /**
+   * The boxes that may move when the wording changes: the screen the text
+   * lives on, and everything laid out inside it. Buttons are marked as
+   * scalable — their width follows their label, and since the label is
+   * invisible while it turns, stretching the box is not noticeable.
+   */
+  static #boxes(items) {
+    const roots = new Set();
+    for (const it of items) roots.add(it.el.closest('.page, .hero, .wrap') ?? document.body);
+
+    const found = [];
+    for (const root of roots) {
+      // document order, so an outer box is always seen before what is in it
+      for (const el of root.querySelectorAll('p, h1, h2, a, figure, button, div, span')) {
+        if (el.classList.contains('flip') || el.classList.contains('word')) continue;
+        if (found.length > 90) break;
+        const was = el.getBoundingClientRect();
+        if (!was.width || !was.height) continue;
+        const own = getComputedStyle(el).transform;
+        found.push({
+          el, was,
+          // objects lie at an angle of their own; an animation that writes
+          // `transform` outright would straighten them out for its duration
+          base: own === 'none' ? '' : ` ${own}`,
+          // boxes whose size follows their label. Their lettering is invisible
+          // while it turns, so stretching them cannot be seen
+          scalable: el.matches('.btn, .sticker-wrap, .polaroid')
+        });
+      }
+    }
+    return found;
+  }
+
   /** Letters while the page is short enough to afford them. */
   static #granularity(items) {
     const load = items.reduce((n, it) => n + it.from.length + it.text.length, 0);
-    const budget = innerWidth < 760 ? 160 : 280;
-    return load > budget;
+    // one and the same budget on every screen: a desktop is not always the
+    // faster machine, and the two should not look like different animations
+    return load > 160;
   }
 
   /**
@@ -112,21 +146,31 @@ export class Flip {
         el.dataset.raw = text;
         continue;
       }
-      items.push({ el, text, from, token, style: getComputedStyle(el) });
+      const style = getComputedStyle(el);
+      items.push({
+        el, text, from, token, style,
+        // read now: the element's own colour is about to be made transparent
+        colour: style.color,
+        font: style.font,
+        tracking: style.letterSpacing
+      });
     }
     if (!items.length) return;
 
     // 0 — width of the wording as one run of text. Split into inline-block
     //     letters it measures a fraction differently — enough for a centred
     //     button to shift sideways at the first and last frame.
-    for (const it of items) it.plain0 = it.el.getBoundingClientRect().width;
-
     const byWord = Flip.#granularity(items);
+
+    /* Everything on the screen that may shift when the wording changes.
+       Their positions are taken now, while the old text is still in place. */
+    const boxes = Flip.#boxes(items);
+
+    for (const it of items) it.was = it.el.getBoundingClientRect();
 
     // 1 — read where the old pieces are, then get them out of the flow
     for (const it of items) it.oldCells = Flip.#cells(it.el, it.from, byWord);
     for (const it of items) {
-      it.height0 = it.el.getBoundingClientRect().height;
       it.oldSpots = it.oldCells.map(c => {
         const r = c.getBoundingClientRect();
         return { ch: c.textContent, x: r.left, y: r.top, h: r.height };
@@ -142,38 +186,71 @@ export class Flip {
         return { ch: c.textContent, x: r.left, y: r.top, h: r.height };
       });
     }
-    for (const it of items) {
-      /* Nothing split stays in the container. Hundreds of inline-blocks make
-         every single layout expensive, and a height transition asks for one
-         on every frame — that alone was most of the cost of a switch. */
-      it.el.textContent = it.text;
-      it.plain1 = it.el.getBoundingClientRect().width;
-      it.height1 = it.el.getBoundingClientRect().height;
-      it.el.style.visibility = 'hidden';
-    }
+    /* Nothing split stays in the container. Hundreds of inline-blocks make
+       every single layout expensive, and a height transition asks for one on
+       every frame — that alone was most of the cost of a switch. */
+    for (const it of items) it.el.textContent = it.text;
 
-    // 3 — carry the boxes across, so that whatever follows drifts rather
-    //     than jumping: paragraphs by height, buttons by width
-    const travel = `${Flip.SWEEP + Flip.HALF}ms ${Flip.#ease}`;
+    /* Only the lettering goes: hiding the element itself would take a
+       button's background and border with it. */
+    for (const it of items) it.now = it.el.getBoundingClientRect();
+    for (const it of items) it.el.style.color = 'transparent';
 
-    for (const it of items) {
-      const parts = [];
-      if (it.blockish && it.height0 && it.height1 && it.height0 !== it.height1) {
-        it.el.style.height = `${it.height0}px`;
-        parts.push(`height ${travel}`);
+    // 3 — boxes travel by transform, never by width or height.
+    //     Animating a size asks the browser to lay the page out on every
+    //     frame; a transform costs it nothing. The final layout is already in
+    //     place, so this only replays the move that has just happened.
+    //
+    //     Transforms of nested elements add up, and a box inside a box that
+    //     is also moving would travel twice as far. So each one is measured
+    //     against the nearest ancestor that is moving, and only what it does
+    //     on its own is animated.
+    /* Every final position is read first, in one pass. Reading one while an
+       earlier box is already animating measures it through that transform,
+       and the number comes out as the exact opposite of the truth. */
+    for (const box of boxes) box.now = box.el.getBoundingClientRect();
+
+    const moving = [];
+
+    const centre = r => [r.left + r.width / 2, r.top + r.height / 2];
+
+    for (const box of boxes) {
+      // centres, not corners: a box that is also being scaled keeps its
+      // middle in place, and its corner would give the wrong offset
+      const [wx, wy] = centre(box.was);
+      const [nx, ny] = centre(box.now);
+      let dx = wx - nx;
+      let dy = wy - ny;
+
+      /* Transforms of nested elements add up, and a box may sit several
+         levels deep. Everything its ancestors already carry is taken off, so
+         only what it does on its own is left.
+
+         Inside an ancestor that is being scaled there is nothing left to do:
+         the scale already carries its children, corners and all. Animating
+         them again tears them off the box they belong to. */
+      let inherited = false;
+      for (const m of moving) {
+        if (m.el === box.el || !m.el.contains(box.el)) continue;
+        if (m.scaled) { inherited = true; break; }
+        dx -= m.dx;
+        dy -= m.dy;
       }
-      if (it.plain0 && it.plain1 && it.plain0 !== it.plain1) {
-        it.el.style.whiteSpace = 'nowrap';
-        it.el.style.overflow = 'hidden';
-        it.el.style.width = `${it.plain0}px`;
-        parts.push(`width ${travel}`);
-      }
-      if (!parts.length) continue;
+      if (inherited) continue;
 
-      void it.el.offsetWidth;
-      it.el.style.transition = parts.join(', ');
-      if (it.height1) it.el.style.height = it.height1 !== it.height0 ? `${it.height1}px` : it.el.style.height;
-      if (it.plain1 !== it.plain0) it.el.style.width = `${it.plain1}px`;
+      const sx = box.scalable && box.now.width > 1 ? box.was.width / box.now.width : 1;
+      const sy = box.scalable && box.now.height > 1 ? box.was.height / box.now.height : 1;
+      const resized = Math.abs(sx - 1) > 0.01 || Math.abs(sy - 1) > 0.01;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && !resized) continue;
+
+      moving.push({ el: box.el, dx, dy, scaled: resized });
+      box.el.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})${box.base}` },
+          { transform: box.base.trim() || 'none' }
+        ],
+        { duration: Flip.SWEEP + Flip.HALF, easing: Flip.#ease, fill: 'backwards' }
+      );
     }
 
     // 4 — one wave for the whole page, timed by position on screen
@@ -187,22 +264,42 @@ export class Flip {
     layer.className = 'flip-layer';
     document.body.appendChild(layer);
 
-    /* The resting position is written inline and the animation only supplies
-       the frames before it, with `backwards` fill. An animation left filling
-       forwards stays active on its element, and with a page of letters that
-       is hundreds of live animations asking for style work every frame. */
-    const letter = (it, spot, from) => {
+    /* Each set of letters lives in a wrapper of its own, anchored to where
+       that line of text sits — before the change for the old letters, after
+       it for the new ones — and the wrapper travels the same path its text
+       does. Pinned to the screen instead, the letters stay put while the box
+       they belong to moves out from under them: a button ends up with its
+       label hanging off one corner. */
+    const ride = (it, rect, dx, dy, back) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'flip-ride';
+      wrap.style.left = `${rect.left}px`;
+      wrap.style.top = `${rect.top}px`;
+      layer.appendChild(wrap);
+
+      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+        wrap.animate(
+          back
+            ? [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }]
+            : [{ transform: 'none' }, { transform: `translate(${dx}px, ${dy}px)` }],
+          { duration: Flip.SWEEP + Flip.HALF, easing: Flip.#ease, fill: 'both' }
+        );
+      }
+      return wrap;
+    };
+
+    const letter = (it, wrap, rect, spot, from) => {
       if (!spot.ch.trim()) return;
       const to = from ? 0 : 90;
       const cell = document.createElement('span');
       cell.className = 'flip';
       cell.textContent = spot.ch;
       cell.style.cssText =
-        `position:absolute;left:${spot.x}px;top:${spot.y}px;` +
-        `font:${it.style.font};color:${it.style.color};` +
-        `letter-spacing:${it.style.letterSpacing};line-height:${spot.h}px;` +
+        `position:absolute;left:${spot.x - rect.left}px;top:${spot.y - rect.top}px;` +
+        `font:${it.font};color:${it.colour};` +
+        `letter-spacing:${it.tracking};line-height:${spot.h}px;` +
         `transform:${Flip.#turn(to)};`;
-      layer.appendChild(cell);
+      wrap.appendChild(cell);
 
       cell.animate(
         [{ transform: Flip.#turn(from) }, { transform: Flip.#turn(to) }],
@@ -216,8 +313,14 @@ export class Flip {
     };
 
     for (const it of items) {
-      for (const spot of it.oldSpots) letter(it, spot, 0);    // turns away
-      for (const spot of it.newSpots) letter(it, spot, -90);  // turns in
+      const dx = it.now.left - it.was.left;
+      const dy = it.now.top - it.was.top;
+
+      const goes = ride(it, it.was, dx, dy, false);       // old text, on its way
+      const comes = ride(it, it.now, -dx, -dy, true);     // new text, arriving
+
+      for (const spot of it.oldSpots) letter(it, goes, it.was, spot, 0);
+      for (const spot of it.newSpots) letter(it, comes, it.now, spot, -90);
     }
 
     setTimeout(() => {
@@ -226,12 +329,7 @@ export class Flip {
       for (const it of items) {
         if (it.el._flip !== it.token) continue;
         it.el.dataset.raw = it.text;
-        it.el.style.visibility = '';
-        it.el.style.height = '';
-        it.el.style.width = '';
-        it.el.style.whiteSpace = '';
-        it.el.style.overflow = '';
-        it.el.style.transition = '';
+        it.el.style.color = '';
       }
       layer.remove();
     }, Flip.SWEEP + Flip.HALF * 2 + Flip.TAIL);

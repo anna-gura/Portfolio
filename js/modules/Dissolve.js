@@ -60,6 +60,19 @@ export class Dissolve {
     });
   }
 
+  /**
+   * Put the plain text back.
+   *
+   * Split text is hundreds of extra elements, and every one of them has to be
+   * restyled whenever anything document-wide changes — a theme switch, say.
+   * Left split, a page costs three times as much to recolour as it should.
+   */
+  static flatten(el) {
+    if (!el) return;
+    const text = el.dataset.raw;
+    if (text !== undefined && el.querySelector('.dust')) el.textContent = text;
+  }
+
   /** Scatter. */
   static out(el) {
     if (!el) return;
@@ -90,6 +103,9 @@ export class Dissolve {
       el.classList.remove('scattered');
       el.classList.add('gathered');
     }));
+
+    clearTimeout(el._flatten);
+    el._flatten = setTimeout(() => Dissolve.flatten(el), Dissolve.IN + 400);
   }
 
 
