@@ -42,7 +42,6 @@ export class PricingConfigurator {
       addon:  root.querySelector('#addon'),
       rangeLead: root.querySelector('#rangeLead'),
       rangeNums: root.querySelector('#rangeNums'),
-      rangeTail: root.querySelector('#rangeTail'),
       open:   root.querySelector('#openNote')
     };
 
@@ -290,7 +289,7 @@ export class PricingConfigurator {
       '.row .txt b, .row .txt small, .cost, ' +
       '.group-head b, .group-head small, .tab, .panel-head b, .panel-desc, ' +
       '.step-head b, .step small, .showcase, ' +
-      '#rangeLead, #rangeTail, #openNote, #addon')];
+      '#rangeLead, #openNote, #addon')];
   }
 
   /** Whether a counter has anything to say yet. */
@@ -381,7 +380,6 @@ export class PricingConfigurator {
        left to the eye. */
     el.rangeLead.textContent = c.ui.corridor;
     this.range.set(`${m(q.low)} – ${m(q.high)}.`);
-    el.rangeTail.textContent = c.ui.afterBrief;
     el.open.textContent = q.open ? c.ui.openNote : '';
     el.open.hidden = !q.open;
 
