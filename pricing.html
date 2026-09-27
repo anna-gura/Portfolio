@@ -5,8 +5,15 @@
 /* Text that will be animated is hidden until the scripts have split it, so it
    does not flash before the first frame. If they never arrive — opened over
    file://, a blocked module, a stale cache — the page must not stay empty:
-   the mark is dropped again and everything shows as plain text. */
+   the mark is dropped again and everything shows as plain text.
+
+   The theme is read here too. Applied later by a module, the first frame is
+   painted in the light one, and moving between pages flashes white. */
 document.documentElement.classList.add('js');
+try {
+  var saved = JSON.parse(localStorage.getItem('pfs.prefs') || '{}');
+  if (saved.theme) document.documentElement.dataset.theme = saved.theme;
+} catch (e) { /* storage unavailable: the markup's own theme stands */ }
 setTimeout(function () {
   if (!document.documentElement.dataset.booted) {
     document.documentElement.classList.remove('js');
@@ -27,6 +34,7 @@ setTimeout(function () {
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/pricing.css">
+<link rel="stylesheet" href="css/wordroll.css">
 </head>
 <body class="papered">
 
@@ -97,7 +105,7 @@ setTimeout(function () {
           <b id="big">≈ $950</b>
           <i id="addon"></i>
         </div>
-        <p class="range"><span id="rangeLead"></span> <em id="rangeNums"></em> <span id="rangeTail"></span></p>
+        <p class="range"><span id="rangeLead"></span> <em id="rangeNums"></em></p>
         <p class="open-note" id="openNote" hidden></p>
         <a class="btn order" id="order" href="https://t.me/AnnGura" data-i="order">Замовити</a>
       </div>

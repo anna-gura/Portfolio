@@ -27,6 +27,12 @@ export class WordRoll {
   static BOXES = '.wrap > h1, .wrap > .lede, ' +
     '.builder > h2, .builder > .hint, .builder > .note, ' +
     '.row, .step, .group-head, .tabs, .panel, .summary-inner > *';
+  /* Boxes whose height is held while the words move. This list may nest
+     freely — holding a height is not a transform, so nothing compounds — and
+     it should reach every container that could breathe when its text is
+     briefly made of inline-blocks. Empty means: the same as BOXES. */
+  static HOLD = '';
+
   static SHIFT = 420;    // ms for a box to travel to its new place
 
   static OUT = 200;      // ms for a word to leave
@@ -86,7 +92,8 @@ export class WordRoll {
       live.push({
         el, text, from,
         line: getComputedStyle(el).lineHeight,
-        h0: r.height
+        h0: r.height,
+        w0: r.width
       });
     }
     if (!live.length) return;
@@ -94,19 +101,41 @@ export class WordRoll {
     /* Where the furniture stands before the words change — in document
        order, so an outer box is always seen before what sits inside it. */
     const boxes = [...document.querySelectorAll(WordRoll.BOXES)]
-      .map(el => ({ el, was: el.getBoundingClientRect() }))
+      .map(el => {
+        const own = getComputedStyle(el).transform;
+        return {
+          el,
+          was: el.getBoundingClientRect(),
+          // objects lie at an angle of their own; writing `transform` outright
+          // would straighten them out for the length of the animation
+          base: own === 'none' ? '' : ` ${own}`
+        };
+      })
       .filter(b => b.was.height && b.was.bottom > -80 && b.was.top < innerHeight + 80);
+
+    const held = [...document.querySelectorAll(WordRoll.HOLD || WordRoll.BOXES)]
+      .map(el => ({ el, h: el.getBoundingClientRect().height, was: el.style.height }))
+      .filter(x => x.h);
 
     // out — downwards
     for (const it of live) it.words = WordRoll.#split(it.el, it.from, it.line);
 
-    /* Hold every line at the height it had.
+    /* Hold every line, and every box around it, at the height it had.
 
        A row of windows does not occupy exactly the same line box as the plain
-       text it stands in for — near an odometer or another inline box it can
-       come out a line taller. Held at its own height, nothing around it can be
-       pushed about while the words are moving. */
-    for (const it of live) it.el.style.height = `${it.h0}px`;
+       text it stands in for: they are inline-blocks with a height of their
+       own, and inside a heading of mixed sizes the line comes out a pixel or
+       several different. Holding the words alone is not enough — their
+       container still breathes, and everything below it drifts and then
+       springs back when the hold is lifted. */
+    /* Width as well as height. A line of windows does not break where the
+       plain text does, so left free the wording rewraps mid-animation and the
+       block changes shape under the words. */
+    for (const it of live) {
+      it.el.style.height = `${it.h0}px`;
+      it.el.style.width = `${it.w0}px`;
+    }
+    for (const box of held) box.el.style.height = `${box.h}px`;
     for (const it of live) {
       for (const word of it.words) {
         word.animate(
@@ -124,21 +153,39 @@ export class WordRoll {
 
     // in — from above, once roughly half the leavers have gone
     setTimeout(() => {
-      /* The new text lands, the layout settles, and the boxes replay the move
-         they have just made. Transform only: animating a height would ask the
-         browser to lay the page out on every frame. */
+      /* The new wording is put in as plain text first, so the layout that is
+         measured is the one the page will actually settle into. Only then are
+         the words cut into windows again, with every box pinned to its final
+         height — windows are inline-blocks and would otherwise make their
+         containers a few pixels taller, which shows up as everything drifting
+         during the roll and snapping back at the end. */
+      for (const it of live) {
+        it.el.textContent = it.text;
+        it.el.style.height = '';
+        it.el.style.width = '';
+      }
+      for (const box of held) box.el.style.height = box.was;
+
+      for (const box of boxes) box.now = box.el.getBoundingClientRect();
+      for (const it of live) {
+        const r = it.el.getBoundingClientRect();
+        it.h1 = r.height;
+        it.w1 = r.width;
+      }
+      for (const box of held) box.final = box.el.getBoundingClientRect().height;
+
+      /* Pinned to the shape the new wording will have, so the words arrive
+         into their own layout rather than into the old one and shuffle. */
+      for (const it of live) {
+        it.el.style.height = `${it.h1}px`;
+        it.el.style.width = `${it.w1}px`;
+      }
+      for (const box of held) box.el.style.height = `${box.final}px`;
       for (const it of live) WordRoll.#split(it.el, it.text, it.line);
 
-      /* Every hold is lifted at once, so what follows is the final layout
-         and nothing is left to settle later. Animating the heights of single
-         lines instead moves each of them on its own clock, and a line pushed
-         by a neighbour ends up going one way and then the other. */
-      for (const it of live) it.el.style.height = '';
-
-      /* Read every final position first: measuring one box while an earlier
-         one is already animating measures it through that transform. */
-      for (const box of boxes) box.now = box.el.getBoundingClientRect();
-
+      /* The boxes replay the move they have just made. Transform only:
+         animating a height would ask the browser to lay the page out on
+         every frame. */
       const moving = [];
       for (const box of boxes) {
         let dx = box.was.left - box.now.left;
@@ -157,7 +204,8 @@ export class WordRoll {
 
         if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
           box.el.animate(
-            [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+            [{ transform: `translate(${dx}px, ${dy}px)${box.base}` },
+             { transform: box.base.trim() || 'none' }],
             { duration: WordRoll.SHIFT, easing: WordRoll.#glide, fill: 'backwards' }
           );
         }
@@ -201,10 +249,14 @@ export class WordRoll {
 
       // back to plain text: the windows are only needed while something moves
       setTimeout(() => {
+        // holds are lifted onto a layout that already matches them, so this
+        // changes nothing anybody can see
         for (const it of live) {
           it.el.textContent = it.text;
           it.el.style.height = '';
+          it.el.style.width = '';
         }
+        for (const box of held) box.el.style.height = box.was;
       }, WordRoll.IN + WordRoll.SPREAD + 60);
     }, WordRoll.OUT + WordRoll.SPREAD * 0.5);
   }

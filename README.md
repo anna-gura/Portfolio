@@ -78,13 +78,12 @@ top corner, pages after it hug the bottom, and the current page is a dot in
 the middle. The active item keeps its place in the flow and is only made
 invisible — removing it would shift every neighbouring label by a row.
 
-`Flip` handles a change of language everywhere: a wave crosses the screen from
-left to right, turning every character on its vertical axis. Timing comes from
-a character's position on screen rather than its index, so a letter at the
-start of the second line does not wait for the whole first line. The old text
-stays in the flow while the new one is pinned to a fixed layer at the
-coordinates it will end up in, and boxes travel from the old size to the new
-one, so nothing jumps when a translation is a different length.
+`WordRoll` handles a change of language on both pages: old words leave
+downwards, new ones come down from above, each with a small delay of its own.
+Whole words rather than letters — at a glance the eye reads the movement, not
+the glyphs, and a page of copy is thousands of characters. The arriving half
+starts once about half the leavers are done, so the page is never empty for
+long. Anything scrolled out of sight is swapped without animation.
 
 ---
 

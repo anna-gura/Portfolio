@@ -69,7 +69,7 @@ h2{
    exactly as the ball passes the holes it does not stop at.
 
    `-webkit-text-fill-color` rather than `color: transparent`, because the
-   letter-flip animation reads the computed colour when it copies a line, and
+   word roll reads the computed colour when it copies a line, and
    a transparent copy is an invisible one. */
 #bases .row .txt b,
 #bases .row .txt small{
@@ -313,7 +313,6 @@ body.papered > header{
 
 /* Options read faster in two columns once there is room. */
 @media (min-width:620px){
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;column-gap:clamp(20px,3vw,40px)}
 }
 
 /* ─── motion ladder ───────────────────────────────────── */
@@ -627,13 +626,7 @@ html.switching .fox.blink .lid-bot{animation:none}
 }
 
 
-/* ─── words rolling over on a language change ─────────── */
-/* A window one line tall over a strip of two: the new wording above, the old
-   one below. Rolling the strip down swaps them. */
-/* A window one line tall. Clipped up and down but not left and right, so a
-   word passing through is never cut at the sides. */
-.roll{display:inline-block;vertical-align:top;clip-path:inset(0 -100vw)}
-.roll-in{display:block;white-space:pre}
+
 
 /* While the words are moving the gradient is put away.
 

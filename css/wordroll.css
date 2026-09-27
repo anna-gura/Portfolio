@@ -1,0 +1,6 @@
+/* Words rolling over on a language change.
+
+   A window one line tall. Clipped up and down but not left and right, so a
+   word passing through is never cut at the sides. */
+.roll{display:inline-block;vertical-align:top;clip-path:inset(0 -100vw)}
+.roll-in{display:block;white-space:pre}

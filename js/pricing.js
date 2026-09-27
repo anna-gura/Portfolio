@@ -11,6 +11,11 @@ new Theme(document.getElementById('theme'));
 
 const pending = [];
 
+/* Held so that nothing breathes while the words are windows; the travelling
+   set is chosen separately, since transforms of nested boxes would add up. */
+WordRoll.HOLD = '.builder, .summary-inner, .group, .tabs, .panel, ' +
+  '.row, .step, #bases, #counts, #extras, #after, .steps';
+
 
 /* The configurator is built in the stored language straight away, so the page
    never appears in Ukrainian and then switches. */

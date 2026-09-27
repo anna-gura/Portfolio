@@ -83,20 +83,4 @@
              transform .46s cubic-bezier(.4,0,.22,1);
 }
 
-
-/* One letter, mid-turn. */
-/* No will-change here: with a page of text that would promote hundreds of
-   layers, and the cost of managing them outweighs anything it saves. */
-.flip{
-  display:inline-block;white-space:pre;
-  backface-visibility:hidden;
-}
-
-/* The old letters spend the turn here, pinned to the coordinates they had
-   before the paragraph was re-set in another language. */
-.flip-layer{
-  position:fixed;inset:0;z-index:55;
-  pointer-events:none;
-}
 /* One line of turning letters, travelling with the text it replaces. */
-.flip-ride{position:absolute;top:0;left:0;transform-origin:0 0}

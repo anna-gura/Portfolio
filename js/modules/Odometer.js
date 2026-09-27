@@ -73,21 +73,29 @@ export class Odometer {
     const existing = [...this.el.children];
     const rolling = [];
 
-    /* Aligned from the right, the way a counter works: when a price grows
-       from three digits to four, the digits already there keep their glyphs
-       and the new one arrives at the front. Aligned from the left instead,
-       every position shifts and the tail rolls in last — which reads as the
-       final digits going missing for a moment. */
-    const shift = Math.max(0, chars.length - old.length);
-    const drop = Math.max(0, old.length - chars.length);
+    /* Only the part that actually changed is rebuilt.
+
+       "від $850" becoming "від $1 500" keeps its opening words and its last
+       digits; just the middle is new. Matching the strings from one end alone
+       shifts every position and re-rolls the whole line, which is far more
+       movement than the change deserves. */
+    let head = 0;
+    while (head < chars.length && head < old.length && chars[head] === old[head]) head++;
+
+    let tail = 0;
+    while (tail < chars.length - head && tail < old.length - head
+           && chars[chars.length - 1 - tail] === old[old.length - 1 - tail]) tail++;
 
     const cells = chars.map((ch, i) => {
-      const j = i - shift + drop;
+      const fromTail = i >= chars.length - tail;
+      const j = i < head ? i : (fromTail ? old.length - (chars.length - i) : -1);
+
       if (j >= 0 && existing[j] && existing[j].dataset.ch === ch) return existing[j];
-      const { cell, strip } = this.#cell(j >= 0 ? old[j] : undefined, ch);
+
+      const { cell, strip } = this.#cell(old[i], ch);
       // a cell with nothing behind it is a new place in the line, not a
       // changed glyph: it opens up rather than appearing at full width
-      rolling.push({ cell, strip, delay: i * Odometer.STAGGER, fresh: j < 0 });
+      rolling.push({ cell, strip, delay: (i - head) * Odometer.STAGGER, fresh: old[i] === undefined });
       return cell;
     });
 

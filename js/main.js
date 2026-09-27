@@ -11,7 +11,7 @@ import { ParticleSwap } from './modules/ParticleSwap.js';
 import { FoxBlink }    from './modules/FoxBlink.js';
 import { Wordmark }    from './modules/Wordmark.js';
 import { MistText }    from './modules/MistText.js';
-import { Flip }        from './modules/Flip.js';
+import { WordRoll }    from './modules/WordRoll.js';
 import { Rail }        from './modules/Rail.js';
 import { Book }        from './modules/Book.js';
 import { TitleFlight } from './modules/TitleFlight.js';
@@ -25,6 +25,16 @@ document.querySelectorAll('[data-tw]').forEach(el => Typewriter.apply(el));
 const wordmark = new Wordmark(document.querySelector('.wordmark'));
 
 ParticleSwap.flatten = els => els.forEach(el => Dissolve.flatten(el));
+
+/* Things on the album with a place of their own: when a translation runs to a
+   different number of lines, everything below it shifts, and a print or a
+   button jumping there is more noticeable than the words rolling. None of
+   these contains another, so their transforms cannot compound.
+   Set here rather than in the module, so the pricing page keeps its own. */
+WordRoll.BOXES = '.fox, .wordmark, .lede, .page-inner h2, ' +
+  '.polaroid, .sticker-wrap, .btn, .hero-hint';
+WordRoll.HOLD = '.page-inner, .two > div, .works-row, .works-cta, .btns, ' +
+  '.sticker-wrap, .sticker, .polaroid, .page-inner h2, .lede, .hero-inner';
 
 new Theme($('theme'));
 new FoxBlink($('fox'));
@@ -141,9 +151,15 @@ const i18n = new I18n({
   },
 
   onChange: lang => {
-    // one wave for the whole page: measured together, they cannot land in
-    // positions that another element is about to invalidate
-    Flip.batch(pending);
+    // one wave for the whole page: the words roll over together
+    WordRoll.batch(pending);
+    for (const { el } of pending) {
+      // the roll leaves plain text behind; give the trailing words of a
+      // heading their particles back for the next page turn
+      if (el.classList.contains('hx')) {
+        setTimeout(() => MistText.settle(el), WordRoll.duration());
+      }
+    }
     pending.length = 0;
 
     language = lang;

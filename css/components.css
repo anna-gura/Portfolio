@@ -55,7 +55,6 @@ header{
 .polaroid:nth-of-type(2):focus-visible{transform:rotate(.9deg) translateY(-4px) scale(1.02)}
 .polaroid:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
 
-
 .polaroid .shot{
   display:block;aspect-ratio:16/10;
   background:var(--paper-2);
@@ -188,31 +187,7 @@ html.js [data-dust].gathered,
 html.js [data-dust].scattered{opacity:1}
 
 /* ─── price counter ───────────────────────────────────── */
-
-  to{transform:translateY(0)}
-}
-
-
-
-
-
-
 /* ─── price counter ───────────────────────────────────── */
-/* ─── price counter ───────────────────────────────────── */
-.odo{display:inline-flex;align-items:baseline;font-variant-numeric:tabular-nums}
-.odo-cell{
-  display:inline-block;
-  height:1.06em;overflow:hidden;vertical-align:baseline;
-  text-align:center;
-}
-.odo-strip{
-  display:block;
-  transform:translateY(0);
-  transition:transform .44s cubic-bezier(.32,0,.2,1);
-}
-.odo-strip.roll{transform:translateY(-1.06em)}
-.odo-strip.settled{transition:none}
-.odo-strip > span{display:block;height:1.06em;line-height:1.06em}
 
 /* ─── theme flood ─────────────────────────────────────── */
 /* The old state sits still while the new one is revealed through a growing
@@ -221,7 +196,6 @@ html.js [data-dust].scattered{opacity:1}
 ::view-transition-new(root){animation:none;mix-blend-mode:normal}
 ::view-transition-old(root){z-index:0}
 ::view-transition-new(root){z-index:1}
-
 
 /* Texture layers are dropped while the theme is being flooded on: snapshotting
    blended full-screen layers is what makes that transition stutter. */
@@ -233,13 +207,11 @@ html.switching .pt{transition:none}
 html.switching .fox.blink .lid-top,
 html.switching .fox.blink .lid-bot{animation:none}
 
-
 /* Canvas the particle swap draws on. It exists only while a page is turning. */
 .particles{
   position:fixed;inset:0;z-index:50;
   pointer-events:none;
 }
-
 
 /* A button in transit between two pages: the box morphs, the labels cross. */
 .btn-flight{
@@ -267,6 +239,4 @@ html.switching .fox.blink .lid-bot{animation:none}
 .btn-flight .now{opacity:0}
 .btn-flight.arrived .was{opacity:0}
 .btn-flight.arrived .now{opacity:1;transition-delay:.3s}
-
-
 

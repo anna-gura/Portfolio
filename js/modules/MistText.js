@@ -7,8 +7,6 @@
  * rather than a block sliding into place.
  */
 export class MistText {
-  static OUT = 430;   // ms the old wording needs to disperse
-
   /** @param {HTMLElement|null} el */
   constructor(el) {
     this.el = el;
@@ -72,29 +70,6 @@ export class MistText {
       span.style.transitionDelay = `${(Math.random() * 110).toFixed(0)}ms`;
       span.classList.remove('on');
     }
-  }
-
-  /**
-   * Replace the text of any element with the same effect: the old wording
-   * scatters into blur, the new one condenses out of it.
-   *
-   * This is the animation used for every language switch on the site.
-   */
-  static swap(el, text) {
-    if (!el) return;
-    const token = (el._mist ?? 0) + 1;
-    el._mist = token;
-
-    const mist = new MistText(el);
-    mist.hide();
-
-    setTimeout(() => {
-      if (el._mist !== token) return;    // a newer switch took over
-      delete el.dataset.raw;
-      el.textContent = text;
-      const fresh = new MistText(el);
-      fresh.show();
-    }, MistText.OUT);
   }
 
   /**
