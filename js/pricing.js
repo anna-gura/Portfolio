@@ -5,12 +5,12 @@ import { Prefs } from './modules/Prefs.js';
 import { PricingConfigurator } from './modules/PricingConfigurator.js';
 import { PRICING_COPY } from './i18n/pricing.js';
 import { Dissolve } from './modules/Dissolve.js';
-import { ParticleSwap } from './modules/ParticleSwap.js';
-import { Flip } from './modules/Flip.js';
+import { WordRoll } from './modules/WordRoll.js';
 
 new Theme(document.getElementById('theme'));
 
 const pending = [];
+
 
 /* The configurator is built in the stored language straight away, so the page
    never appears in Ukrainian and then switches. */
@@ -22,16 +22,31 @@ const staticCopy = Object.fromEntries(
   Object.entries(PRICING_COPY).map(([lang, table]) => [lang, { ...table.ui }])
 );
 
+/* Choosing the language that is already on does nothing. Registered before
+   the switcher's own handler, so it can stop the click going any further. */
+document.getElementById('langs').addEventListener('click', e => {
+  const button = e.target.closest('button[data-lang]');
+  if (button && button.dataset.lang === document.documentElement.lang) {
+    e.stopImmediatePropagation();
+  }
+});
+
 new I18n({
   dictionaries: staticCopy,
   fallback: 'uk',
   switcher: document.getElementById('langs'),
-  onSwap: (el, text) => pending.push({ el, text }),
+  onSwap: (el, text) => {
+    // the way back is furniture, not content: it should sit still
+    if (el.classList.contains('back')) { el.textContent = text; el.dataset.raw = text; return; }
+    pending.push({ el, text });
+  },
 
   onChange: lang => {
-    Flip.batch(pending);
+    // one wave for the whole page: the static copy and every label the
+    // configurator has just regenerated, measured and animated together
+    const generated = configurator.setLanguage(lang);
+    WordRoll.batch([...pending, ...generated]);
     pending.length = 0;
-    configurator.setLanguage(lang);
   }
 });
 

@@ -29,6 +29,7 @@ export class Flip {
   static SWEEP = 360;       // ms for a wave to cross the screen
   static BOX = 380;         // ms for the boxes to move between the two waves
   static TAIL = 80;         // ms of slack at the end
+  static HANDOVER = 140;    // ms the copies take to fade off the real text
   static LOAD = 160;        // characters above which whole words turn instead
 
   static #ease = 'cubic-bezier(.45,0,.55,1)';
@@ -195,6 +196,7 @@ export class Flip {
            soon as it lands, it leaves a hole where the word should be. */
         if (!arriving) anim.onfinish = () => cell.remove();
       }
+
     }
   }
 
@@ -251,6 +253,7 @@ export class Flip {
 
       const centre = r => [r.left + r.width / 2, r.top + r.height / 2];
       const moving = [];
+      const running = [];
 
       for (const box of boxes) {
         const [wx, wy] = centre(box.was);
@@ -276,13 +279,13 @@ export class Flip {
         if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && !resized) continue;
 
         moving.push({ el: box.el, dx, dy, scaled: resized });
-        box.el.animate(
+        running.push(box.el.animate(
           [
             { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})${box.base}` },
             { transform: box.base.trim() || 'none' }
           ],
           { duration: Flip.BOX, easing: Flip.#ease, fill: 'backwards' }
-        );
+        ));
       }
 
       /* ── three: the new wording turns back into view ── */
@@ -312,26 +315,29 @@ export class Flip {
     }, Flip.SWEEP + Flip.HALF);
   }
 
-  /** Bring a group back into view, after `wait` milliseconds. */
-  static #arrive(items, byWord, wait) {
-    if (!items.length) return;
+  /** Bring a group back into view. */
+  static #arrive(items, byWord) {
+    const still = items.filter(it => it.el._flip === it.token);
+    if (!still.length) return;
+
+    const layer = Flip.#layer();
+    Flip.#wave(still, layer, byWord, true);
 
     setTimeout(() => {
-      const still = items.filter(it => it.el._flip === it.token);
-      if (!still.length) return;
+      /* The copies sit at their own fractional coordinates; the real text is
+         laid out with kerning. Swapping one for the other outright moves every
+         letter by a fraction of a pixel at once, which reads as a twitch. So
+         the real text is uncovered underneath and the copies fade off it. */
+      for (const it of still) {
+        if (it.el._flip !== it.token) continue;
+        it.el.dataset.raw = it.text;
+        it.el.style.color = '';
+      }
 
-      const layer = Flip.#layer();
-      Flip.#wave(still, layer, byWord, true);
-
-      setTimeout(() => {
-        layer.remove();
-        for (const it of still) {
-          if (it.el._flip !== it.token) continue;
-          it.el.dataset.raw = it.text;
-          it.el.style.color = '';
-        }
-      }, Flip.SWEEP + Flip.HALF + Flip.TAIL);
-    }, wait);
+      layer
+        .animate([{ opacity: 1 }, { opacity: 0 }], { duration: Flip.HANDOVER, easing: 'linear' })
+        .finished.then(() => layer.remove(), () => layer.remove());
+    }, Flip.SWEEP + Flip.HALF + Flip.TAIL);
   }
 
   /** One element on its own. */
@@ -341,6 +347,6 @@ export class Flip {
 
   /** How long a change takes, for anything that has to wait for it. */
   static duration() {
-    return (Flip.SWEEP + Flip.HALF) * 2 + Flip.BOX + Flip.TAIL + 60;
+    return (Flip.SWEEP + Flip.HALF) * 2 + Flip.BOX + Flip.TAIL + Flip.HANDOVER + 60;
   }
 }

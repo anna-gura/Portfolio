@@ -1,8 +1,7 @@
-import { BASES, COUNTERS, MOTION, EXTRAS, SUPPORT, INSTALMENT, CORRIDOR }
+import { BASES, COUNTERS, MOTION, GROUPS, EXTRAS, SUPPORT, INSTALMENT, CORRIDOR }
   from '../data/pricing.js';
 import { PRICING_COPY } from '../i18n/pricing.js';
 import { Odometer } from './Odometer.js';
-import { Flip } from './Flip.js';
 
 /**
  * Lets a visitor assemble a project and watch what it costs.
@@ -11,18 +10,22 @@ import { Flip } from './Flip.js';
  * it adds, so someone whose budget does not fit can see for themselves which
  * compromise is cheaper than they feared.
  *
- * Picking a starting point rewrites the whole configuration — pages, motion
- * level and pre-selected options — because a "base" here is a preset, not a
- * sealed package. Everything can then be unticked and the total follows.
+ * Anything whose scope can change by an order of magnitude — a built scene, a
+ * booking system, an identity — is marked open-ended in the data and shown as
+ * "from". Pick one and the whole quote is labelled a starting figure, because
+ * that is what it is. A calculator that hides this produces a number the
+ * studio then has to argue its way out of.
  */
 export class PricingConfigurator {
   constructor(root, lang = 'uk') {
     this.root = root;
     this.lang = lang;
+
     this.state = {
-      base: 'one',
-      pages: 0, langs: 0, rounds: 0,
+      base: 'custom',
+      counts: Object.fromEntries(COUNTERS.map(c => [c.id, c.min])),
       motion: 'calm',
+      groups: Object.fromEntries(GROUPS.map(g => [g.id, 'none'])),
       extras: new Set(),
       support: false,
       instalment: false
@@ -32,17 +35,19 @@ export class PricingConfigurator {
       bases:  root.querySelector('#bases'),
       counts: root.querySelector('#counts'),
       motion: root.querySelector('#motion'),
+      groups: root.querySelector('#groups'),
       extras: root.querySelector('#extras'),
       after:  root.querySelector('#after'),
       total:  root.querySelector('#big'),
       addon:  root.querySelector('#addon'),
-      range:  root.querySelector('#rangeLine'),
-      picked: root.querySelector('#picked'),
-      order:  root.querySelector('#order')
+      rangeLead: root.querySelector('#rangeLead'),
+      rangeNums: root.querySelector('#rangeNums'),
+      rangeTail: root.querySelector('#rangeTail'),
+      open:   root.querySelector('#openNote')
     };
 
     this.odometer = new Odometer(this.el.total);
-    this.applyBase('one');
+    this.range = new Odometer(this.el.rangeNums);
     this.build();
     this.#bind();
   }
@@ -67,18 +72,11 @@ export class PricingConfigurator {
     return forms[2];
   }
 
-  /* ── presets ─────────────────────────────────────────── */
-
-  /** @param {string} id */
-  applyBase(id) {
-    const base = BASES.find(b => b.id === id);
-    if (!base) return;
-
-    this.state.base = id;
-    this.state.motion = base.motion;
-    this.state.extras = new Set(
-      base.includes === '*' ? EXTRAS.map(e => e.id) : base.includes
-    );
+  /** "+$290" or "from +$1 200", depending on how firm the figure is. */
+  #tag(price, open) {
+    if (!price) return this.copy.ui.included;
+    const sum = PricingConfigurator.money(price);
+    return open ? `${this.copy.ui.from} +${sum}` : `+${sum}`;
   }
 
   /* ── markup ──────────────────────────────────────────── */
@@ -98,12 +96,12 @@ export class PricingConfigurator {
       </label>`).join('');
 
     this.el.counts.innerHTML = COUNTERS.map(x => `
-      <div class="row" data-count="${x.id}">
+      <div class="row ${x.sub ? 'sub' : ''}" data-count="${x.id}">
         <span class="txt"><b>${c.counters[x.id].name}</b><small>${c.counters[x.id].desc}</small></span>
-        <span class="cost">${m(x.unit)} ${c.ui.per}</span>
+        <span class="cost">${x.first ? `${c.ui.from} +${m(x.first)}` : `${m(x.unit)} ${c.ui.per}`}</span>
         <span class="stepper">
           <button type="button" data-step="-1" data-for="${x.id}" aria-label="−">−</button>
-          <output id="out-${x.id}">${this.state[x.id]}</output>
+          <output id="out-${x.id}">${this.state.counts[x.id]}</output>
           <button type="button" data-step="1" data-for="${x.id}" aria-label="+">+</button>
         </span>
       </div>`).join('');
@@ -118,7 +116,7 @@ export class PricingConfigurator {
             <span class="step-n">${String(i + 1).padStart(2, '0')}</span>
             <span class="step-tick" aria-hidden="true"></span>
             <b>${c.motion[step.id].name}</b>
-            <span class="cost">${step.price ? '+' + m(step.price) : c.ui.included}</span>
+            <span class="cost">${this.#tag(step.price, step.open)}</span>
           </span>
           <small>${c.motion[step.id].desc}</small>
           ${step.showcase
@@ -127,11 +125,37 @@ export class PricingConfigurator {
         </span>
       </label>`).join('');
 
+    /* Tabs rather than a list of options: only the level being considered
+       needs explaining, and one panel at a time keeps four descriptions from
+       competing for the same attention. */
+    this.el.groups.innerHTML = GROUPS.map(g => `
+      <div class="group" data-group="${g.id}">
+        <p class="group-head"><b>${c.groups[g.id].name}</b><small>${c.groups[g.id].desc}</small></p>
+
+        <div class="tabs" role="tablist" aria-label="${c.groups[g.id].name}">
+          ${g.levels.map(l => `
+            <button class="tab" type="button" role="tab"
+                    data-level="${l.id}"
+                    aria-selected="${this.state.groups[g.id] === l.id}"
+                    tabindex="${this.state.groups[g.id] === l.id ? '0' : '-1'}">
+              ${c.levels[g.id][l.id].name}
+            </button>`).join('')}
+        </div>
+
+        <div class="panel" role="tabpanel">
+          <p class="panel-head">
+            <b data-panel-name="${g.id}"></b>
+            <span class="cost" data-panel-cost="${g.id}"></span>
+          </p>
+          <p class="panel-desc" data-panel-desc="${g.id}"></p>
+        </div>
+      </div>`).join('');
+
     this.el.extras.innerHTML = EXTRAS.map(e => `
       <label class="row" data-extra="${e.id}">
         <span class="check"><input type="checkbox" value="${e.id}" ${this.state.extras.has(e.id) ? 'checked' : ''}><span></span></span>
         <span class="txt"><b>${c.extras[e.id].name}</b><small>${c.extras[e.id].desc}</small></span>
-        <span class="cost">+${m(e.price)}</span>
+        <span class="cost">${this.#tag(e.price, e.open)}</span>
       </label>`).join('');
 
     this.el.after.innerHTML = `
@@ -157,13 +181,39 @@ export class PricingConfigurator {
 
   #bind() {
     this.el.bases.addEventListener('change', e => {
-      this.applyBase(e.target.value);
-      this.build();           // a preset rewrites motion and options too
+      this.state.base = e.target.value;
+      this.render();
     });
 
     this.el.motion.addEventListener('change', e => {
       this.state.motion = e.target.value;
       this.render();
+    });
+
+    this.el.groups.addEventListener('click', e => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      this.state.groups[tab.closest('.group').dataset.group] = tab.dataset.level;
+      this.render();
+    });
+
+    // arrow keys move along a tab list; a keyboard user should not have to
+    // tab through four buttons to reach the last one
+    this.el.groups.addEventListener('keydown', e => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      const step = { ArrowLeft: -1, ArrowRight: 1, Home: -Infinity, End: Infinity }[e.key];
+      if (step === undefined) return;
+      e.preventDefault();
+
+      const list = [...tab.parentElement.querySelectorAll('.tab')];
+      const at = list.indexOf(tab);
+      const next = list[Math.max(0, Math.min(list.length - 1,
+        step === -Infinity ? 0 : step === Infinity ? list.length - 1 : at + step))];
+
+      this.state.groups[tab.closest('.group').dataset.group] = next.dataset.level;
+      this.render();
+      next.focus();
     });
 
     this.el.extras.addEventListener('change', e => {
@@ -183,9 +233,9 @@ export class PricingConfigurator {
       if (!button) return;
       const id = button.dataset.for;
       const config = COUNTERS.find(x => x.id === id);
-      this.state[id] = Math.max(0,
-        Math.min(config.max, this.state[id] + Number(button.dataset.step)));
-      this.root.querySelector(`#out-${id}`).textContent = this.state[id];
+      this.state.counts[id] = Math.max(config.min,
+        Math.min(config.max, this.state.counts[id] + Number(button.dataset.step)));
+      this.root.querySelector(`#out-${id}`).textContent = this.state.counts[id];
       this.#syncSteppers();
       this.render();
     });
@@ -196,38 +246,68 @@ export class PricingConfigurator {
     for (const config of COUNTERS) {
       for (const b of this.el.counts.querySelectorAll(`button[data-for="${config.id}"]`)) {
         const step = Number(b.dataset.step);
-        b.disabled = (step === -1 && this.state[config.id] === 0)
-                  || (step === 1 && this.state[config.id] === config.max);
+        b.disabled = (step === -1 && this.state.counts[config.id] === config.min)
+                  || (step === 1 && this.state.counts[config.id] === config.max);
       }
     }
   }
 
-  /** Redraw every generated label after a language switch. */
+  /**
+   * Redraw every generated label in the new language and hand back what
+   * changed, still showing the old wording.
+   *
+   * The caller animates it together with the rest of the page: run separately,
+   * each label would start its own wave and the page would change in a
+   * ragged sequence instead of one sweep.
+   *
+   * @returns {{el:HTMLElement,text:string}[]}
+   */
   setLanguage(lang) {
     // the old DOM is thrown away by build(), so keep the text, not the nodes
     const before = this.#labels().map(el => el.textContent);
     this.lang = lang;
     this.build();
-    const after = this.#labels();
+    this.range.replay();      // the numbers turn over with the words around them
 
-    // pair old and new text of the same cell, so each one dissolves in place
-    after.forEach((el, i) => {
+    const pairs = [];
+    this.#labels().forEach((el, i) => {
       const was = before[i];
-      if (was !== undefined && was !== el.textContent) {
-        const to = el.textContent;
-        el.dataset.raw = was;
-        el.textContent = was;
-        Flip.run(el, to);
-      }
+      if (was === undefined) return;
+      const text = el.textContent;
+      el.dataset.raw = was;
+      el.textContent = was;          // the wave starts from the old wording
+      /* Included even when the wording is the same. A price of "+$180" reads
+         alike in every language, and a line standing still while everything
+         around it turns over looks like something failed. */
+      pairs.push({ el, text });
     });
+    return pairs;
   }
 
+  /** Everything on the page that carries words and can be rolled over. */
   #labels() {
     return [...this.root.querySelectorAll(
-      '.row .txt b, .row .txt small, .row .cost, .step-head b, .step small, .showcase')];
+      '.row .txt b, .row .txt small, .cost, ' +
+      '.group-head b, .group-head small, .tab, .panel-head b, .panel-desc, ' +
+      '.step-head b, .step small, .showcase, ' +
+      '#rangeLead, #rangeTail, #openNote, #addon')];
+  }
+
+  /** Whether a counter has anything to say yet. */
+  needed(counter) {
+    if (!counter.needs) return true;
+    const on = COUNTERS.find(x => x.id === counter.needs);
+    return this.state.counts[counter.needs] > on.min;
   }
 
   /* ── maths ───────────────────────────────────────────── */
+
+  /** What a counter costs above the minimum a project already includes. */
+  static #units(config, value) {
+    const n = Math.max(0, value - config.min);
+    if (!n) return 0;
+    return config.first ? config.first + (n - 1) * config.unit : n * config.unit;
+  }
 
   calculate() {
     const { state } = this;
@@ -235,31 +315,46 @@ export class PricingConfigurator {
     const motion = MOTION.find(m => m.id === state.motion);
 
     let total = base.price + motion.price;
-    for (const counter of COUNTERS) total += state[counter.id] * counter.unit;
-    for (const extra of EXTRAS) if (state.extras.has(extra.id)) total += extra.price;
+    let open = base.open || motion.open;
 
+    for (const counter of COUNTERS) {
+      if (!this.needed(counter)) continue;
+      total += PricingConfigurator.#units(counter, state.counts[counter.id]);
+    }
+
+    for (const group of GROUPS) {
+      const level = group.levels.find(l => l.id === state.groups[group.id]);
+      total += level.price;
+      if (level.price && level.open) open = true;
+    }
+
+    for (const extra of EXTRAS) {
+      if (!state.extras.has(extra.id)) continue;
+      total += extra.price;
+      if (extra.open) open = true;
+    }
+
+    // support follows what can break, not the size of the bill
     let support = SUPPORT.base + (SUPPORT.motion[state.motion] ?? 0);
-    for (const [id, add] of Object.entries(SUPPORT.surcharge)) {
+    for (const [id, add] of Object.entries(SUPPORT.groups)) {
+      if (state.groups[id] && state.groups[id] !== 'none') support += add;
+    }
+    for (const [id, add] of Object.entries(SUPPORT.extras)) {
       if (state.extras.has(id)) support += add;
     }
 
     const rounded = PricingConfigurator.round50(total);
+    const high = open ? CORRIDOR.openHigh : CORRIDOR.high;
 
     return {
-      total, rounded, support,
+      total, rounded, support, open,
       monthly: rounded * INSTALMENT.markup / INSTALMENT.months,
       low: Math.floor(total * CORRIDOR.low / 50) * 50,
-      high: Math.ceil(total * CORRIDOR.high / 50) * 50,
-      pages: base.pages + state.pages
+      high: Math.ceil(total * high / 50) * 50,
+      pages: state.counts.pages,
+      langs: state.counts.langs,
+      rounds: state.counts.rounds
     };
-  }
-
-  /** The note beside the price changes with the same effect as the copy. */
-  #setAddon(text) {
-    const el = this.el.addon;
-    const current = el.dataset.raw ?? el.textContent;
-    if (current === text) return;
-    Flip.run(el, text);
   }
 
   /* ── output ──────────────────────────────────────────── */
@@ -270,38 +365,78 @@ export class PricingConfigurator {
     const q = this.calculate();
     const { state, el } = this;
 
-    this.odometer.set(state.instalment
-      ? `≈ ${m(Math.round(q.monthly / 5) * 5)}${c.ui.month}`
-      : `≈ ${m(q.rounded)}`);
-    this.#setAddon(state.instalment ? c.ui.months : '');
+    const sum = state.instalment
+      ? `${m(Math.round(q.monthly / 5) * 5)}${c.ui.month}`
+      : m(q.rounded);
+    this.odometer.set(`${q.open ? c.ui.from : '≈'} ${sum}`);
 
+    let addon = state.instalment ? c.ui.months : '';
     if (state.support) {
-      this.#setAddon(el.addon.dataset.raw ??
-        `${state.instalment ? '  ·  ' : ''}+ ${m(q.support)}${c.ui.month} ${c.ui.supportShort}`);
+      addon += `${addon ? '  ·  ' : ''}+ ${m(q.support)}${c.ui.month} ${c.ui.supportShort}`;
     }
+    el.addon.textContent = addon;
 
-    el.range.innerHTML =
-      `${c.ui.corridor} <em>${m(q.low)} – ${m(q.high)}</em>. ${c.ui.afterBrief}`;
-
-    const bits = [
-      `${q.pages} ${PricingConfigurator.plural(q.pages, c.ui.pageWord)}`,
-      c.motion[state.motion].name.toLowerCase()
-    ];
-    if (state.langs) bits.push(`${state.langs + 1} ${c.ui.langWord}`);
-    if (state.rounds) bits.push(`${2 + state.rounds} ${c.ui.roundWord}`);
-    const chosen = EXTRAS.filter(e => state.extras.has(e.id))
-      .map(e => c.extras[e.id].name.toLowerCase());
-    el.picked.textContent = bits.join(', ') + (chosen.length ? `  ·  ${chosen.join(', ')}` : '');
+    /* Three parts rather than one line of markup: the words change with the
+       language and roll over, the numbers change with every click and are
+       left to the eye. */
+    el.rangeLead.textContent = c.ui.corridor;
+    this.range.set(`${m(q.low)} – ${m(q.high)}.`);
+    el.rangeTail.textContent = c.ui.afterBrief;
+    el.open.textContent = q.open ? c.ui.openNote : '';
+    el.open.hidden = !q.open;
 
     el.supCost.textContent = `+${m(q.support)}${c.ui.month}`;
     el.splitCost.textContent = `≈ ${m(Math.round(q.monthly / 5) * 5)}${c.ui.month}`;
 
+    /* Translation is nothing to decide about until there is a second
+       language, so the line stays out of the way until there is one. */
+    for (const counter of COUNTERS) {
+      const row = this.root.querySelector(`.row[data-count="${counter.id}"]`);
+      if (row) row.hidden = !this.needed(counter);
+    }
+
+    for (const group of GROUPS) {
+      const id = state.groups[group.id];
+      const level = group.levels.find(l => l.id === id);
+      const words = c.levels[group.id][id];
+
+      for (const tab of this.root.querySelectorAll(`[data-group="${group.id}"] .tab`)) {
+        const on = tab.dataset.level === id;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+      }
+
+      const name = this.root.querySelector(`[data-panel-name="${group.id}"]`);
+      const cost = this.root.querySelector(`[data-panel-cost="${group.id}"]`);
+      const desc = this.root.querySelector(`[data-panel-desc="${group.id}"]`);
+      if (!name) continue;
+
+      name.textContent = words.name;
+      cost.textContent = id === 'none' ? '—' : this.#tag(level.price, level.open);
+      desc.textContent = words.desc || '';
+
+      /* The panel announces itself only when the tab actually changed.
+         Replayed on every redraw it flashes once whenever anything else on
+         the page is rebuilt — a language switch, for instance. */
+      if (this.shown?.[group.id] !== id) {
+        const panel = name.closest('.panel');
+        panel.classList.remove('turned');
+        void panel.offsetWidth;
+        panel.classList.add('turned');
+      }
+    }
+
     for (const row of this.root.querySelectorAll('.row')) {
       const counter = row.dataset.count;
       const input = row.querySelector('input');
-      row.classList.toggle('active',
-        counter ? this.state[counter] > 0 : Boolean(input?.checked));
+      const config = counter && COUNTERS.find(x => x.id === counter);
+      const chosen = config
+        ? this.state.counts[counter] > config.min
+        : Boolean(input?.checked);
+      row.classList.toggle('active', chosen && row.dataset.level !== 'none');
     }
+    this.shown = Object.fromEntries(GROUPS.map(g => [g.id, state.groups[g.id]]));
+
     for (const step of this.root.querySelectorAll('.step')) {
       step.classList.toggle('active', step.dataset.motion === state.motion);
     }

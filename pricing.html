@@ -67,23 +67,28 @@ setTimeout(function () {
   <div class="desk">
 
     <div class="builder">
-      <h2 data-i="hBase">Основа</h2>
-      <p class="hint" data-i="hBaseHint">З чого починаємо. Далі все додається зверху.</p>
+      <h2 data-i="hBase">Базові пакети</h2>
+      <p class="hint" data-i="hBaseHint">Скільки дизайну малюється саме під вас. Одна сторінка, одна мова й два раунди правок входять у будь-який пакет.</p>
       <div id="bases"></div>
 
       <h2 data-i="hScope">Обсяг</h2>
+      <p class="hint" data-i="hScopeHint">Понад те, що вже входить у пакет.</p>
       <div id="counts"></div>
 
       <h2 data-i="hMotion">Рух і графіка</h2>
       <div class="steps" id="motion"></div>
 
+      <h2 data-i="hGroups">Що сайт уміє</h2>
+      <p class="hint" data-i="hGroupsHint">Кожен рядок — окрема робота. Вибирайте рівень або лишайте «не потрібно».</p>
+      <div id="groups"></div>
+
       <h2 data-i="hExtras">Додатково</h2>
-      <div class="grid-2" id="extras"></div>
+      <div id="extras"></div>
 
       <h2 data-i="hAfter">Після запуску</h2>
       <div id="after"></div>
 
-      <p class="note" data-i="note" data-dust>Це прикидка, а не рахунок. Реальна ціна фіксується після короткого брифа — і вже не змінюється: якщо я не вклалася в оцінку, це мій ризик, не ваш. Мінімальний проєкт — від $500.</p>
+      <p class="note" data-i="note" data-dust>Це орієнтир, а не рахунок. Ціна фіксується після короткого брифа — і далі не змінюється: якщо я не вклалася в оцінку, це мій ризик, не ваш. Великий магазин, особисті кабінети, складна логіка бронювання чи важкий WebGL рахуються окремо.</p>
     </div>
 
     <aside class="summary woven">
@@ -92,8 +97,8 @@ setTimeout(function () {
           <b id="big">≈ $950</b>
           <i id="addon"></i>
         </div>
-        <p class="range" id="rangeLine"></p>
-        <p class="picked" id="picked"></p>
+        <p class="range"><span id="rangeLead"></span> <em id="rangeNums"></em> <span id="rangeTail"></span></p>
+        <p class="open-note" id="openNote" hidden></p>
         <a class="btn order" id="order" href="https://t.me/AnnGura" data-i="order">Замовити</a>
       </div>
     </aside>

@@ -17,7 +17,7 @@ body.papered::before, body.papered::after{position:fixed}
 .eyebrow{margin-bottom:26px}
 .back{
   font-family:"PT Mono",monospace;
-  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;
   color:var(--pencil);text-decoration:none;
   transition:color .25s ease;
 }
@@ -29,16 +29,16 @@ h1{
   font-weight:400;line-height:1.28;color:var(--ink);
   max-width:20ch;
 }
-.lede{margin-top:16px;max-width:56ch}
+.lede{margin-top:16px;max-width:56ch;font-size:17.5px;line-height:1.55}
 
 h2{
   font-family:"PT Mono",monospace;
-  font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+  font-size:13.5px;letter-spacing:.2em;text-transform:uppercase;
   color:var(--pencil);font-weight:400;
   margin:54px 0 4px;padding-bottom:12px;
   border-bottom:1px solid rgba(var(--ink-rgb),.14);
 }
-.hint{font-size:14px;color:var(--pencil);margin:14px 0 2px}
+.hint{font-size:16px;color:var(--pencil);margin:14px 0 2px}
 
 /* ─── one option ──────────────────────────────────────── */
 .row{
@@ -50,14 +50,57 @@ h2{
 .row .txt b{display:block;font-weight:400;color:var(--ink)}
 .row .txt small{
   display:block;color:var(--pencil);
-  font-size:13.5px;line-height:1.45;margin-top:3px;
+  font-size:15.5px;line-height:1.5;margin-top:4px;
 }
 .row .cost{
   flex:none;white-space:nowrap;
   font-family:"PT Mono",monospace;
-  font-size:12.5px;color:var(--pencil);
+  font-size:14px;color:var(--pencil);
 }
 .row.active .cost{color:var(--accent)}
+
+/* The words are lit by the same light as the hole beside them, and by the
+   same means: something moves underneath and the colour follows it.
+
+   Three bands, each the height of the line: ordinary ink, then terracotta,
+   then ink again. Which band shows is a matter of where the light is — below
+   the words, on them, or above. So the direction is right in both cases, and
+   choosing a distant option drags the lit band across everything in between,
+   exactly as the ball passes the holes it does not stop at.
+
+   `-webkit-text-fill-color` rather than `color: transparent`, because the
+   letter-flip animation reads the computed colour when it copies a line, and
+   a transparent copy is an invisible one. */
+#bases .row .txt b,
+#bases .row .txt small{
+  -webkit-text-fill-color:transparent;
+  -webkit-background-clip:text;
+  background-clip:text;
+  background-repeat:no-repeat;
+  background-size:100% 300%;
+  background-position:0 0;                   /* light waiting below */
+  transition:background-position .15s cubic-bezier(.8,0,1,1);
+}
+#bases .row .txt b{
+  background-image:linear-gradient(to bottom,
+    var(--ink) 0 33.34%,
+    var(--accent) 33.34% 66.66%,
+    var(--ink) 66.66% 100%);
+}
+#bases .row .txt small{
+  background-image:linear-gradient(to bottom,
+    var(--pencil) 0 33.34%,
+    var(--accent) 33.34% 66.66%,
+    var(--pencil) 66.66% 100%);
+}
+#bases .row.active .txt b,
+#bases .row.active .txt small{
+  background-position:0 50%;                 /* lit */
+  transition:background-position .2s cubic-bezier(0,0,.2,1) .15s;
+}
+/* past the chosen option the light is above, not below */
+#bases .row:has(input:checked) ~ .row .txt b,
+#bases .row:has(input:checked) ~ .row .txt small{background-position:0 100%}
 
 /* checkbox and radio, drawn rather than restyled */
 .check{flex:none;width:21px;height:21px;position:relative;cursor:pointer}
@@ -68,19 +111,92 @@ h2{
   background:transparent;pointer-events:none;
   transition:background .2s ease,border-color .2s ease;
 }
-.check input:checked + span{background:var(--accent);border-color:var(--accent)}
-.check input:checked + span::after{
+.check input:checked + span{border-color:var(--accent)}
+.check.radio input:checked + span::after{
   content:"";position:absolute;left:7px;top:3px;
   width:6px;height:11px;border:solid var(--paper);
   border-width:0 1.8px 1.8px 0;transform:rotate(42deg);
 }
+
+/* A checkbox fills by hand rather than by switching state: a square slides in
+   from the corner on the diagonal and comes to rest covering the box. The
+   colour arrives, it does not appear. */
+.check:not(.radio) span{position:relative;overflow:hidden;background:transparent}
+.check:not(.radio) input:checked + span{background:transparent}
+.check:not(.radio) span::before{
+  content:"";position:absolute;
+  width:42px;height:42px;
+  top:-36px;left:-36px;
+  background:var(--accent);
+  transform:rotate(45deg);
+  transition:top .3s ease, left .3s ease;
+}
+.check:not(.radio) input:checked + span::before{top:-7px;left:-7px}
+
+/* The tick waits for the colour to arrive under it, and leaves at once. */
+/* Centred by transform rather than by hand: the tick is a rotated rectangle,
+   and its box after rotation is not the box you can measure in pixels. */
+.check:not(.radio) span::after{
+  content:"";position:absolute;z-index:1;
+  left:50%;top:50%;width:6px;height:11px;
+  margin:-7px 0 0 -3px;
+  border:solid var(--paper);border-width:0 1.8px 1.8px 0;
+  transform:rotate(42deg) scale(0);
+  transform-origin:50% 50%;
+  opacity:0;
+  transition:transform .18s ease, opacity .1s ease;
+}
+.check:not(.radio) input:checked + span::after{
+  transform:rotate(42deg) scale(1);
+  opacity:1;
+  transition:transform .22s cubic-bezier(.3,1.6,.5,1) .17s, opacity .1s ease .17s;
+}
 .check input:focus-visible + span{box-shadow:0 0 0 3px rgba(var(--accent-rgb),.35)}
 
-.check.radio span{border-radius:50%}
-.check.radio input:checked + span::after{
-  left:6px;top:6px;width:7px;height:7px;
-  border:none;background:var(--paper);border-radius:50%;transform:none;
+/* A radio is a hole punched in the paper, and the choice is a lit ball
+   travelling underneath it.
+   
+   That is what the direction logic is for: above the chosen option the ball
+   sits below the hole, below it the ball sits above. Switching makes the
+   light appear to slide from one hole to the next rather than blink off here
+   and on there. The ball leaves quickly and arrives slowly, so the eye
+   follows the arrival. */
+.check.radio span{
+  border:none;border-radius:50%;
+  background-color:rgba(var(--ink-rgb),.07);
+  box-shadow:
+    inset 0 1.5px 2.5px rgba(var(--ink-rgb),.3),
+    inset 0 -1px 1px rgba(255,255,255,.35),
+    0 1px 0 rgba(255,255,255,.45);
+  background-image:radial-gradient(circle 11px at 50% 50%,
+    #EFB79C 0 2.2px,
+    var(--accent) 4px,
+    rgba(var(--accent-rgb),.5) 6.5px,
+    rgba(var(--accent-rgb),0) 10px);
+  background-repeat:no-repeat;
+  background-size:100% 100%;
+  background-position:0 21px;                /* waiting below the hole */
+  transition:background-position .15s cubic-bezier(.8,0,1,1),
+             transform .25s cubic-bezier(.8,0,1,1);
 }
+[data-theme="dark"] .check.radio span{
+  background-color:rgba(0,0,0,.3);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0,0,0,.6),
+    inset 0 -1px 1px rgba(255,255,255,.08),
+    0 1px 0 rgba(255,255,255,.06);
+}
+
+.check.radio input:checked + span{
+  background-position:0 0;                   /* risen into the hole */
+  transition:background-position .2s cubic-bezier(0,0,.2,1) .15s,
+             transform .25s cubic-bezier(0,0,.2,1);
+}
+.check.radio input:checked + span::after{content:none}
+.check.radio:active span{transform:scale(1.18)}
+
+/* everything past the chosen option has the ball above it, not below */
+#bases .row:has(input:checked) ~ .row .check.radio span{background-position:0 -21px}
 
 /* ─── counter ─────────────────────────────────────────── */
 .stepper{flex:none;display:flex;align-items:center;gap:3px}
@@ -97,7 +213,7 @@ h2{
 .stepper button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .stepper output{
   min-width:42px;text-align:center;
-  font-family:"PT Mono",monospace;font-size:15px;color:var(--ink);
+  font-family:"PT Mono",monospace;font-size:16.5px;color:var(--ink);
 }
 
 /* ─── running total ───────────────────────────────────── */
@@ -114,15 +230,15 @@ h2{
   font-size:clamp(27px,5.2vw,40px);font-weight:400;
   line-height:1.1;color:var(--accent);
 }
-.total i{font-style:normal;font-size:17px;color:var(--ink-soft)}
-.range{margin-top:8px;font-size:13.5px;color:var(--pencil)}
+.total i{font-style:normal;font-size:18.5px;color:var(--ink-soft)}
+.range{margin-top:8px;font-size:15px;color:var(--pencil)}
 .range em{font-style:normal;color:var(--ink-soft)}
-.picked{margin-top:12px;font-size:13px;color:var(--pencil);line-height:1.6;max-width:70ch}
+.picked{margin-top:12px;font-size:14.5px;color:var(--pencil);line-height:1.6;max-width:70ch}
 
 .note{
   margin-top:44px;padding-top:22px;
   border-top:1px solid rgba(var(--ink-rgb),.1);
-  font-size:14px;color:var(--pencil);max-width:62ch;
+  font-size:15.5px;color:var(--pencil);max-width:62ch;
 }
 
 @media (max-width:620px){
@@ -132,8 +248,11 @@ h2{
 }
 
 /* ─── header, shared with the album ───────────────────── */
-header{
-  position:fixed;top:0;left:0;right:0;z-index:40;
+/* `body.papered > header`, not plain `header`: the shared paper styles give
+   every direct child of the sheet `position: relative`, and a class beats a
+   tag. Without the extra weight the switches scroll away with the page. */
+body.papered > header{
+  position:fixed;top:0;left:0;right:0;z-index:60;
   display:flex;align-items:center;justify-content:space-between;
   gap:16px;
   padding:calc(20px + env(safe-area-inset-top,0px)) clamp(18px,4vw,40px) 22px;
@@ -141,8 +260,8 @@ header{
 .langs{display:flex;gap:1px}
 .langs button{
   background:none;border:none;cursor:pointer;
-  font-family:"PT Mono",monospace;font-size:11px;letter-spacing:.1em;
-  color:var(--pencil);padding:5px;transition:color .2s ease;
+  font-family:"PT Mono",monospace;font-size:12.5px;letter-spacing:.1em;
+  color:var(--pencil);padding:6px;transition:color .2s ease;
 }
 .langs button:hover{color:var(--ink)}
 .langs button[aria-pressed="true"]{color:var(--accent)}
@@ -187,7 +306,7 @@ header{
 
   /* The builder keeps clear of the panel. */
   .wrap{padding-right:clamp(348px,28vw,432px)}
-  header{padding-right:clamp(348px,28vw,432px)}
+  body.papered > header{padding-right:clamp(348px,28vw,432px)}
   .summary{padding-top:96px}
   .builder .note{margin-bottom:72px}
 }
@@ -218,15 +337,15 @@ header{
   display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
   margin-bottom:6px;
 }
-.step-head b{font-weight:400;color:var(--ink);font-size:16.5px}
+.step-head b{font-weight:400;color:var(--ink);font-size:18px}
 .step-head .cost{margin-left:auto}
 .step-n{
   font-family:"PT Mono",monospace;
-  font-size:11px;letter-spacing:.18em;color:var(--pencil);
+  font-size:12px;letter-spacing:.18em;color:var(--pencil);
 }
 .step small{
   display:block;color:var(--pencil);
-  font-size:13.5px;line-height:1.5;
+  font-size:15.5px;line-height:1.55;
 }
 .step.active .step-n{color:var(--accent)}
 
@@ -250,7 +369,7 @@ header{
 
 .showcase{
   display:inline-block;margin-top:10px;
-  font-family:"PT Mono",monospace;font-size:11px;letter-spacing:.14em;
+  font-family:"PT Mono",monospace;font-size:12.5px;letter-spacing:.14em;
   color:var(--accent);text-decoration:none;
   border-bottom:1px solid rgba(var(--accent-rgb),.4);
   padding-bottom:2px;
@@ -258,7 +377,9 @@ header{
 .showcase:hover{border-bottom-color:var(--accent)}
 
 /* ─── motion ladder: which step is chosen must be unmistakable ─── */
-.step{padding-left:52px}
+/* No dot here: the accent bar down the left edge already says which step is
+   taken, and a second marker on the same row only competes with it. */
+.step-tick{display:none}
 .step-tick{
   position:absolute;left:18px;top:50%;
   width:17px;height:17px;border-radius:50%;
@@ -368,17 +489,23 @@ to{transform:translateY(0)}}
 .odo{display:inline-flex;align-items:baseline;font-variant-numeric:tabular-nums}
 .odo-cell{
   display:inline-block;
-  height:1.06em;overflow:hidden;vertical-align:baseline;
+  height:1.06em;
+  /* clipped by shape, not by overflow: an inline-block with hidden overflow
+     takes its bottom edge as its baseline, which lifts the digits above the
+     line they sit in */
+  clip-path:inset(0 -100vw);
+  vertical-align:baseline;
   text-align:center;
 }
 .odo-strip{
-  display:block;
-  transform:translateY(0);
+  display:block;position:relative;
+  transform:translateY(1.06em);
   transition:transform .44s cubic-bezier(.32,0,.2,1);
 }
-.odo-strip.roll{transform:translateY(-1.06em)}
-.odo-strip.settled{transition:none}
+.odo-strip.odo-rolling{transform:translateY(0)}
 .odo-strip > span{display:block;height:1.06em;line-height:1.06em}
+/* the glyph on its way out, held above and out of flow */
+.odo-past{position:absolute;left:0;right:0;top:-1.06em}
 
 /* ─── theme flood ─────────────────────────────────────── */
 /* The old state sits still while the new one is revealed through a growing
@@ -393,8 +520,8 @@ to{transform:translateY(0)}}
 .btn.order{
   display:inline-block;margin-top:20px;
   text-decoration:none;cursor:pointer;
-  font-family:"PT Mono",monospace;font-size:14px;
-  padding:13px 27px;border-radius:999px;
+  font-family:"PT Mono",monospace;font-size:15px;
+  padding:14px 28px;border-radius:999px;
   color:#FBF6EE;background:rgba(var(--accent-rgb),.92);
   border:1px solid rgba(255,255,255,.26);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.34), 0 5px 13px rgba(90,70,48,.16);
@@ -403,8 +530,7 @@ to{transform:translateY(0)}}
 .btn.order:hover{transform:translateY(-1.5px);background:rgba(var(--accent-rgb),1)}
 .btn.order:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
 
-/* The switches stay on screen whatever is scrolling underneath. */
-header{position:fixed;top:0;left:0;right:0;z-index:60}
+
 
 /* A view transition snapshots the whole page. Blended texture layers make
    that snapshot expensive, so they are dropped for the duration — the flood
@@ -416,3 +542,115 @@ html.switching .dust,
 html.switching .pt{transition:none}
 html.switching .fox.blink .lid-top,
 html.switching .fox.blink .lid-bot{animation:none}
+
+
+/* ─── a job as tabs ───────────────────────────────────── */
+.group{margin:0 0 40px}
+.group:last-child{margin-bottom:0}
+
+.group-head{margin:30px 0 2px;padding-bottom:2px}
+.group-head b{
+  display:block;font-weight:400;color:var(--ink);
+  font-family:"PT Mono",monospace;font-size:13.5px;
+  letter-spacing:.16em;text-transform:uppercase;
+}
+.group-head small{
+  display:block;color:var(--pencil);
+  font-size:15.5px;line-height:1.5;margin-top:7px;
+}
+
+.tabs{
+  display:flex;flex-wrap:wrap;gap:2px;
+  margin:18px 0 0;
+  border-bottom:1px solid rgba(var(--ink-rgb),.14);
+}
+.tab{
+  position:relative;
+  background:none;border:none;cursor:pointer;
+  font:inherit;font-size:15.5px;
+  color:var(--pencil);
+  padding:10px 15px 12px;
+  transition:color .25s ease;
+}
+.tab::after{
+  content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;
+  background:var(--accent);
+  transform:scaleX(0);transform-origin:50% 50%;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::after{transform:scaleX(1)}
+.tab:focus-visible{outline:none;color:var(--ink);background:rgba(var(--accent-rgb),.09);border-radius:3px}
+
+/* the sheet the chosen level is written on */
+.panel{
+  border:1px solid rgba(var(--ink-rgb),.14);
+  border-top:none;
+  padding:18px 20px 20px;
+}
+.panel.turned{animation:panel-in .32s ease both}
+@keyframes panel-in{from{opacity:0}to{opacity:1}}
+
+.panel-head{
+  display:flex;align-items:baseline;gap:14px;
+  margin:0 0 8px;
+}
+.panel-head b{font-weight:400;color:var(--ink);font-size:18px}
+.panel-head .cost{margin-left:auto}
+.panel-desc{
+  margin:0;color:var(--pencil);
+  font-size:15.5px;line-height:1.55;
+  min-height:1.55em;
+}
+
+/* a counter that belongs to the line above it */
+.row.sub{
+  margin-left:22px;
+  border-left:1px solid rgba(var(--ink-rgb),.14);
+  padding-left:18px;
+}
+.row[hidden]{display:none}
+
+@media (max-width:620px){
+  .tab{padding:9px 11px 11px;font-size:14.5px}
+  .tab::after{left:10px;right:10px}
+}
+
+/* ─── a figure that is a floor, not an estimate ───────── */
+.open-note{
+  margin-top:10px;
+  font-size:14.5px;line-height:1.55;
+  color:var(--pencil);
+  padding-left:12px;
+  border-left:2px solid rgba(var(--accent-rgb),.5);
+}
+
+
+/* ─── words rolling over on a language change ─────────── */
+/* A window one line tall over a strip of two: the new wording above, the old
+   one below. Rolling the strip down swaps them. */
+/* A window one line tall. Clipped up and down but not left and right, so a
+   word passing through is never cut at the sides. */
+.roll{display:inline-block;vertical-align:top;clip-path:inset(0 -100vw)}
+.roll-in{display:block;white-space:pre}
+
+/* While the words are moving the gradient is put away.
+
+   `background-clip: text` paints the element's background in the shape of the
+   text inside it — and it does that at the text's resting position, so the
+   moving words left a motionless copy of themselves behind. During the roll
+   each word simply takes the colour it would have had. */
+#bases .row .txt b:has(.roll),
+#bases .row .txt small:has(.roll){background-image:none}
+
+#bases .row .txt b .roll-in{-webkit-text-fill-color:var(--ink)}
+#bases .row .txt small .roll-in{-webkit-text-fill-color:var(--pencil)}
+#bases .row.active .txt b .roll-in,
+#bases .row.active .txt small .roll-in{-webkit-text-fill-color:var(--accent)}
+
+
+/* While its label rolls, a button keeps its words on one line: the windows
+   are narrower than the words for a moment, and without this the label wraps
+   and the button jumps a row. */
+.btn:has(.roll){white-space:nowrap}

@@ -21,6 +21,16 @@ export class Odometer {
     this.el.classList.add('odo');
   }
 
+  /** Roll the same value again, for when the words around it change. */
+  replay() {
+    const value = this.value;
+    // cells are reused when the glyph is unchanged, and on a replay every
+    // glyph is unchanged — so they are cleared out first
+    this.el.replaceChildren();
+    this.value = '';
+    this.set(value);
+  }
+
   static #glyph(ch) {
     if (ch === undefined || ch === '' || ch === ' ') return '\u00A0';
     return ch;
@@ -32,11 +42,17 @@ export class Odometer {
     const strip = document.createElement('span');
     strip.className = 'odo-strip';
 
-    const a = document.createElement('span');
-    const b = document.createElement('span');
-    a.textContent = Odometer.#glyph(from);
-    b.textContent = Odometer.#glyph(to);
-    strip.append(a, b);
+    /* The arriving glyph is the one in flow, so the cell is exactly as wide
+       as it will be when this is over. The leaving glyph hangs above it out
+       of flow: were both in flow the cell would be as wide as the wider of
+       the two and would narrow the moment the old one goes — every cell at
+       its own moment, which is what makes the number jitter. */
+    const arriving = document.createElement('span');
+    const leaving = document.createElement('span');
+    arriving.textContent = Odometer.#glyph(to);
+    leaving.textContent = Odometer.#glyph(from);
+    leaving.className = 'odo-past';
+    strip.append(arriving, leaving);
     cell.appendChild(strip);
     cell.dataset.ch = to ?? '';
     return { cell, strip };
@@ -57,10 +73,21 @@ export class Odometer {
     const existing = [...this.el.children];
     const rolling = [];
 
+    /* Aligned from the right, the way a counter works: when a price grows
+       from three digits to four, the digits already there keep their glyphs
+       and the new one arrives at the front. Aligned from the left instead,
+       every position shifts and the tail rolls in last — which reads as the
+       final digits going missing for a moment. */
+    const shift = Math.max(0, chars.length - old.length);
+    const drop = Math.max(0, old.length - chars.length);
+
     const cells = chars.map((ch, i) => {
-      if (existing[i] && existing[i].dataset.ch === ch) return existing[i];
-      const { cell, strip } = this.#cell(old[i], ch);
-      rolling.push({ strip, delay: i * Odometer.STAGGER });
+      const j = i - shift + drop;
+      if (j >= 0 && existing[j] && existing[j].dataset.ch === ch) return existing[j];
+      const { cell, strip } = this.#cell(j >= 0 ? old[j] : undefined, ch);
+      // a cell with nothing behind it is a new place in the line, not a
+      // changed glyph: it opens up rather than appearing at full width
+      rolling.push({ cell, strip, delay: i * Odometer.STAGGER, fresh: j < 0 });
       return cell;
     });
 
@@ -70,20 +97,29 @@ export class Odometer {
     // transition to have a starting value to move away from
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (this._run !== run) return;
-      for (const { strip, delay } of rolling) {
+
+      /* Widths of the new places, read in one pass before anything animates. */
+      for (const item of rolling) {
+        if (item.fresh) item.width = item.cell.getBoundingClientRect().width;
+      }
+
+      for (const { cell, strip, delay, fresh, width } of rolling) {
+        if (fresh && width) {
+          cell.animate(
+            [{ width: '0px' }, { width: `${width}px` }],
+            { duration: Odometer.DURATION, delay, easing: 'cubic-bezier(.32,0,.2,1)', fill: 'backwards' }
+          );
+        }
         strip.style.transitionDelay = `${delay}ms`;
-        strip.classList.add('roll');
+        strip.classList.add('odo-rolling');
 
         setTimeout(() => {
           // a newer value took over, or this cell was thrown away: leave it be
           if (this._run !== run || !strip.isConnected) return;
-          // settle without animating: the window now holds only the new glyph
-          const shown = strip.lastElementChild.textContent;
-          strip.classList.add('settled');
-          strip.classList.remove('roll');
-          strip.firstElementChild.textContent = shown;
-          strip.lastElementChild.textContent = shown;
-          requestAnimationFrame(() => strip.classList.remove('settled'));
+          /* Settle without animating, and drop the glyph that has rolled
+             away. Left in place it is invisible but still text: the line
+             copies out as "$$775500" and a screen reader says it twice. */
+          strip.querySelector('.odo-past')?.remove();
         }, Odometer.DURATION + delay + 30);
       }
     }));
