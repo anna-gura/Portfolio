@@ -130,6 +130,15 @@ const book = new Book({
   }
 });
 
+/* Choosing the language that is already on does nothing. Registered before
+   the switcher's own handler, so it can stop the click going any further. */
+$('langs').addEventListener('click', e => {
+  const button = e.target.closest('button[data-lang]');
+  if (button && button.dataset.lang === document.documentElement.lang) {
+    e.stopImmediatePropagation();
+  }
+});
+
 const i18n = new I18n({
   dictionaries: TRANSLATIONS,
   fallback: 'uk',

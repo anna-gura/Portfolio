@@ -4,3 +4,12 @@
    word passing through is never cut at the sides. */
 .roll{display:inline-block;vertical-align:top;clip-path:inset(0 -100vw)}
 .roll-in{display:block;white-space:pre}
+/* one line of the original text, kept whole */
+.roll-line{display:block;white-space:nowrap}
+
+/* While a box is growing into its new width, its words stay on one line and
+   keep to the left edge. Otherwise they wrap inside the narrower box and jump
+   when it catches up. */
+.btn:has(.roll),
+.sticker-wrap:has(.roll) .hand,
+.polaroid:has(.roll) .cap{white-space:nowrap}

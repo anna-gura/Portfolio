@@ -643,7 +643,4 @@ html.switching .fox.blink .lid-bot{animation:none}
 #bases .row.active .txt small .roll-in{-webkit-text-fill-color:var(--accent)}
 
 
-/* While its label rolls, a button keeps its words on one line: the windows
-   are narrower than the words for a moment, and without this the label wraps
-   and the button jumps a row. */
-.btn:has(.roll){white-space:nowrap}
+
